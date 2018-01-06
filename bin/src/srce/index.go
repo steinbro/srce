@@ -54,7 +54,7 @@ func (i Index) read() (<-chan IndexEntry, error) {
 }
 
 func (i Index) add(hash, itype, path string) error {
-  entry := IndexEntry{sha1: hash, itype: itype, path: path}
+	entry := IndexEntry{sha1: hash, itype: itype, path: path}
 	indexFile, err := os.OpenFile(i.path, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		return err
