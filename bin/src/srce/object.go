@@ -1,6 +1,7 @@
 package srce
 
 import (
+	"bytes"
 	"compress/zlib"
 	"crypto/sha1"
 	"encoding/hex"
@@ -13,7 +14,7 @@ type Object struct {
 	otype    string
 	path     string
 	sha1     string
-	contents []byte
+	contents bytes.Buffer
 }
 
 func blobOject(path string) (Object, error) {
@@ -24,12 +25,16 @@ func blobOject(path string) (Object, error) {
 	if err != nil {
 		return o, err
 	}
-	o.contents = contents
 
 	// Compute SHA1 hash of file
 	sha := sha1.New()
 	sha.Write(contents)
 	o.sha1 = hex.EncodeToString(sha.Sum(nil))
+
+	// Store compressed contents
+	w := zlib.NewWriter(&o.contents)
+	w.Write(contents)
+	w.Close()
 
 	return o, nil
 }
@@ -41,16 +46,9 @@ func (o Object) write(dotDir string) error {
 		return err
 	}
 
-	// Write compressed file contents to .srce/objects/00/rest_of_hash
+	// Write file contents to .srce/objects/00/rest_of_hash
 	blobPath := filepath.Join(blobFolder, o.sha1[2:])
-	blobFile, err := os.OpenFile(blobPath, os.O_CREATE|os.O_WRONLY, 0644)
-	if err != nil {
-		return err
-	}
-	blobData := zlib.NewWriter(blobFile)
-	blobData.Write(o.contents)
-	blobData.Close()
-	if err := blobFile.Close(); err != nil {
+	if err := ioutil.WriteFile(blobPath, o.contents.Bytes(), 0644); err != nil {
 		return err
 	}
 
