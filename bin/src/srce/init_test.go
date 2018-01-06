@@ -6,6 +6,8 @@ import (
 	"testing"
 )
 
+const testFolder = ".srce-test"
+
 func TestInit(t *testing.T) {
 	// Remove any stale test directories
 	os.RemoveAll(testFolder)

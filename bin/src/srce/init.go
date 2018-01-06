@@ -7,6 +7,8 @@ import (
 	"path/filepath"
 )
 
+const DotDir = ".srce"
+
 func Init(dotDir string) error {
 	if _, err := os.Stat(dotDir); os.IsNotExist(err) {
 		os.Mkdir(dotDir, 0700)
