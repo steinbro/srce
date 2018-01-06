@@ -47,16 +47,7 @@ func Add(dotDir, path string) error {
 	}
 
 	// Write "<sha1> blob <path>" to .srce/index
-	indexLine := fmt.Sprintf("%s blob %s\n", shaHex, path)
-	indexPath := filepath.Join(dotDir, "index")
-	indexFile, err := os.OpenFile(indexPath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-	if err != nil {
-		return err
-	}
-	if _, err := indexFile.Write([]byte(indexLine)); err != nil {
-		return err
-	}
-	if err := indexFile.Close(); err != nil {
+	if err := getIndex(dotDir).add(shaHex, "blob", path); err != nil {
 		return err
 	}
 

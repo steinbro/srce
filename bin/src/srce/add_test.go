@@ -1,10 +1,8 @@
 package srce
 
 import (
-	"io/ioutil"
 	"os"
 	"path/filepath"
-	"strings"
 	"testing"
 )
 
@@ -34,14 +32,12 @@ func TestAdd(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// Index should be created, with one line
-	indexPath := filepath.Join(testFolder, "index")
-	indexFIle, err := ioutil.ReadFile(indexPath)
+	// Index should be created, with one entry
+	entries, err := getIndex(testFolder).read()
 	if err != nil {
 		t.Fatal("index file not readable after Add")
 	}
-	indexLine := strings.Split(string(indexFIle), " ")
-	hash := indexLine[0]
+	hash := (<-entries).sha1
 
 	// New non-empty blob should exist
 	blobPath := filepath.Join(testFolder, "objects", hash[:2], hash[2:])
