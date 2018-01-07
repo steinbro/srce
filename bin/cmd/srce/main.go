@@ -25,7 +25,7 @@ func main() {
 	if _, err := os.Stat(subcommand); os.IsNotExist(err) {
 		log.Fatalf("%s: no such command", args[0])
 	}
-	if err := syscall.Exec(subcommand, args[1:], os.Environ()); err != nil {
+	if err := syscall.Exec(subcommand, args, os.Environ()); err != nil {
 		log.Fatal(err)
 	}
 }

@@ -13,7 +13,8 @@ func TestInit(t *testing.T) {
 	os.RemoveAll(testFolder)
 
 	// Check no errors are raised
-	if err := Init(testFolder); err != nil {
+	repo := Repo{Dir: testFolder}
+	if err := repo.Init(); err != nil {
 		t.Fatal(err)
 	}
 
@@ -32,7 +33,8 @@ func TestInitBad(t *testing.T) {
 	os.OpenFile(testFolder, os.O_RDONLY|os.O_CREATE, 0666)
 
 	// Check that an error is raised
-	if err := Init(testFolder); err == nil {
+	repo := Repo{Dir: testFolder}
+	if err := repo.Init(); err == nil {
 		t.Fatalf("Init succeeded when %s already exists", testFolder)
 	}
 

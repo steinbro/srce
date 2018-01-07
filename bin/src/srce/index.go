@@ -30,8 +30,8 @@ func (i IndexEntry) toBytes() []byte {
 	return []byte(fmt.Sprintf("%s %s %s\n", i.sha1, i.itype, i.path))
 }
 
-func getIndex(dotDir string) Index {
-	return Index{path: filepath.Join(dotDir, "index")}
+func (r Repo) getIndex() Index {
+	return Index{path: filepath.Join(r.Dir, "index")}
 }
 
 func (i Index) read() (<-chan IndexEntry, error) {

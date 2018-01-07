@@ -39,9 +39,9 @@ func blobOject(path string) (Object, error) {
 	return o, nil
 }
 
-func (o Object) write(dotDir string) error {
+func (r Repo) writeObject(o Object) error {
 	// Create .srce/objects/00/ directory (where 00 is the first 2 bytes of hash)
-	blobFolder := filepath.Join(dotDir, "objects", o.sha1[:2])
+	blobFolder := filepath.Join(r.Dir, "objects", o.sha1[:2])
 	if err := os.MkdirAll(blobFolder, 0700); err != nil {
 		return err
 	}
@@ -49,11 +49,6 @@ func (o Object) write(dotDir string) error {
 	// Write file contents to .srce/objects/00/rest_of_hash
 	blobPath := filepath.Join(blobFolder, o.sha1[2:])
 	if err := ioutil.WriteFile(blobPath, o.contents.Bytes(), 0644); err != nil {
-		return err
-	}
-
-	// Write "<sha1> blob <path>" to .srce/index
-	if err := getIndex(dotDir).add(o.sha1, o.otype, o.path); err != nil {
 		return err
 	}
 

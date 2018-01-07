@@ -1,13 +1,9 @@
 package srce
 
-import (
-	"fmt"
-	"os"
-)
+import "fmt"
 
-func Add(dotDir, path string) error {
-	// Check that .srce directory exists
-	if _, err := os.Stat(dotDir); os.IsNotExist(err) {
+func (r Repo) Add(path string) error {
+	if !r.IsInitialized() {
 		return fmt.Errorf("not a srce project")
 	}
 
@@ -16,7 +12,12 @@ func Add(dotDir, path string) error {
 		return err
 	}
 
-	if err := o.write(dotDir); err != nil {
+	if err := r.writeObject(o); err != nil {
+		return err
+	}
+
+	// Write "<sha1> blob <path>" to .srce/index
+	if err := r.getIndex().add(o.sha1, o.otype, o.path); err != nil {
 		return err
 	}
 

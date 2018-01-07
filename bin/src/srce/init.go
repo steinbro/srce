@@ -9,22 +9,22 @@ import (
 
 const DotDir = ".srce"
 
-func Init(dotDir string) error {
-	if _, err := os.Stat(dotDir); os.IsNotExist(err) {
-		os.Mkdir(dotDir, 0700)
+func (r Repo) Init() error {
+	if !r.IsInitialized() {
+		os.Mkdir(r.Dir, 0700)
 	} else {
-		return fmt.Errorf("%s already exists", dotDir)
+		return fmt.Errorf("%s already exists", r.Dir)
 	}
 
 	subdirs := []string{"objects/info", "objects/pack", "refs/heads", "refs/tags"}
 	for _, subdir := range subdirs {
-		if err := os.MkdirAll(filepath.Join(dotDir, subdir), 0700); err != nil {
+		if err := os.MkdirAll(filepath.Join(r.Dir, subdir), 0700); err != nil {
 			return err
 		}
 	}
 
 	err := ioutil.WriteFile(
-		filepath.Join(dotDir, "HEAD"),
+		filepath.Join(r.Dir, "HEAD"),
 		[]byte("ref: refs/heads/master\n"), 0644)
 	if err != nil {
 		return err

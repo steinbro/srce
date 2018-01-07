@@ -12,7 +12,8 @@ func main() {
 	}
 	path := os.Args[1]
 
-	if err := srce.Add(srce.DotDir, path); err != nil {
+	repo := srce.Repo{Dir: srce.DotDir}
+	if err := repo.Add(path); err != nil {
 		log.Fatal(err)
 	}
 }

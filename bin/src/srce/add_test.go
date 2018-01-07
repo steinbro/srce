@@ -6,15 +6,17 @@ import (
 	"testing"
 )
 
-func setUp(t *testing.T) {
-	// Remove any stale test directories
-	if err := os.RemoveAll(testFolder); err != nil {
-		t.Fatal(err)
-	}
+func setUp(t *testing.T) Repo {
+	repo := Repo{Dir: testFolder}
 
-	if err := Init(testFolder); err != nil {
+	// Remove any stale test directories
+	if err := os.RemoveAll(repo.Dir); err != nil {
 		t.Fatal(err)
 	}
+	if err := repo.Init(); err != nil {
+		t.Fatal(err)
+	}
+	return repo
 }
 
 func tearDown(t *testing.T) {
@@ -25,22 +27,22 @@ func tearDown(t *testing.T) {
 }
 
 func TestAdd(t *testing.T) {
-	setUp(t)
+	repo := setUp(t)
 	// Check no errors are raised
-	testFile := filepath.Join(testFolder, "HEAD")
-	if err := Add(testFolder, testFile); err != nil {
+	testFile := filepath.Join(repo.Dir, "HEAD")
+	if err := repo.Add(testFile); err != nil {
 		t.Fatal(err)
 	}
 
 	// Index should be created, with one entry
-	entries, err := getIndex(testFolder).read()
+	entries, err := repo.getIndex().read()
 	if err != nil {
 		t.Fatal("index file not readable after Add")
 	}
 	hash := (<-entries).sha1
 
 	// New non-empty blob should exist
-	blobPath := filepath.Join(testFolder, "objects", hash[:2], hash[2:])
+	blobPath := filepath.Join(repo.Dir, "objects", hash[:2], hash[2:])
 	stat, err := os.Stat(blobPath)
 	if err != nil {
 		t.Fatalf("Blob file %s unreadable", blobPath)
@@ -52,8 +54,8 @@ func TestAdd(t *testing.T) {
 }
 
 func TestAddNonexistent(t *testing.T) {
-	setUp(t)
-	if err := Add(testFolder, "nonexistent"); err == nil {
+	repo := setUp(t)
+	if err := repo.Add("nonexistent"); err == nil {
 		t.Fatal("Add nonexistent file succeeded")
 	} else {
 		t.Log(err)
@@ -62,7 +64,8 @@ func TestAddNonexistent(t *testing.T) {
 }
 
 func TestAddOutside(t *testing.T) {
-	if err := Add(testFolder, "nonexistent"); err == nil {
+	repo := Repo{Dir: testFolder}
+	if err := repo.Add("nonexistent"); err == nil {
 		t.Fatal("Add to non-project succeeded")
 	} else {
 		t.Log(err)
@@ -70,21 +73,21 @@ func TestAddOutside(t *testing.T) {
 }
 
 func TestAddUnwritable(t *testing.T) {
-	setUp(t)
+	repo := setUp(t)
 	// Make project folder read-only
-	if err := os.Chmod(testFolder, 0500); err != nil {
+	if err := os.Chmod(repo.Dir, 0500); err != nil {
 		t.Fatal(err)
 	}
 
-	testFile := filepath.Join(testFolder, "HEAD")
-	if err := Add(testFolder, testFile); err == nil {
+	testFile := filepath.Join(repo.Dir, "HEAD")
+	if err := repo.Add(testFile); err == nil {
 		t.Fatal("Add to non-writable project succeeded")
 	} else {
 		t.Log(err)
 	}
 
 	// Restore writability
-	if err := os.Chmod(testFolder, 0700); err != nil {
+	if err := os.Chmod(repo.Dir, 0700); err != nil {
 		t.Fatal(err)
 	}
 	tearDown(t)
