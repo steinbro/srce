@@ -5,9 +5,10 @@ import (
 	"compress/zlib"
 	"crypto/sha1"
 	"encoding/hex"
+	"fmt"
 	"io/ioutil"
-	"os"
-	"path/filepath"
+	"os/user"
+	"time"
 )
 
 type Object struct {
@@ -15,6 +16,13 @@ type Object struct {
 	path     string
 	sha1     string
 	contents bytes.Buffer
+}
+
+func timestampedHash(initial string) string {
+	timestamp := time.Now().UTC().Format("2006-01-02T15:04:05-0700")
+	sha := sha1.New()
+	sha.Write([]byte(fmt.Sprintf("%s %s", initial, timestamp)))
+	return hex.EncodeToString(sha.Sum(nil))
 }
 
 func blobOject(path string) (Object, error) {
@@ -39,18 +47,18 @@ func blobOject(path string) (Object, error) {
 	return o, nil
 }
 
-func (r Repo) writeObject(o Object) error {
-	// Create .srce/objects/00/ directory (where 00 is the first 2 bytes of hash)
-	blobFolder := filepath.Join(r.Dir, "objects", o.sha1[:2])
-	if err := os.MkdirAll(blobFolder, 0700); err != nil {
-		return err
-	}
+func commitObject(tree Object, message string) (Object, error) {
+	o := Object{otype: "commit"}
 
-	// Write file contents to .srce/objects/00/rest_of_hash
-	blobPath := filepath.Join(blobFolder, o.sha1[2:])
-	if err := ioutil.WriteFile(blobPath, o.contents.Bytes(), 0644); err != nil {
-		return err
+	// Use current OS user as committer
+	committer, err := user.Current()
+	if err != nil {
+		return o, err
 	}
+	o.sha1 = timestampedHash(committer.Name)
 
-	return nil
+	o.contents.Write([]byte(fmt.Sprintf(
+		"tree %s\nauthor %s\n\n%s\n", tree.sha1, committer.Name, message)))
+
+	return o, nil
 }

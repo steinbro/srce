@@ -12,7 +12,7 @@ func (r Repo) Add(path string) error {
 		return err
 	}
 
-	if err := r.writeObject(o); err != nil {
+	if err := r.Store(o); err != nil {
 		return err
 	}
 

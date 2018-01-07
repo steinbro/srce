@@ -45,10 +45,9 @@ func TestAdd(t *testing.T) {
 	blobPath := filepath.Join(repo.Dir, "objects", hash[:2], hash[2:])
 	stat, err := os.Stat(blobPath)
 	if err != nil {
-		t.Fatalf("Blob file %s unreadable", blobPath)
-	}
-	if stat.Size() == 0 {
-		t.Fatalf("Blob file %s empty", blobPath)
+		t.Errorf("Blob file %s unreadable", blobPath)
+	} else if stat.Size() == 0 {
+		t.Errorf("Blob file %s empty", blobPath)
 	}
 	tearDown(t)
 }
@@ -56,7 +55,7 @@ func TestAdd(t *testing.T) {
 func TestAddNonexistent(t *testing.T) {
 	repo := setUp(t)
 	if err := repo.Add("nonexistent"); err == nil {
-		t.Fatal("Add nonexistent file succeeded")
+		t.Error("Add nonexistent file succeeded")
 	} else {
 		t.Log(err)
 	}

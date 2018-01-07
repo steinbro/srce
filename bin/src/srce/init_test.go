@@ -21,7 +21,7 @@ func TestInit(t *testing.T) {
 	// Check that HEAD file was created
 	headFile := filepath.Join(testFolder, "HEAD")
 	if _, err := os.Stat(headFile); os.IsNotExist(err) {
-		t.Fatalf("%s doesn't exist after Init", headFile)
+		t.Errorf("%s doesn't exist after Init", headFile)
 	}
 
 	// Remove temporary test directory
@@ -35,7 +35,7 @@ func TestInitBad(t *testing.T) {
 	// Check that an error is raised
 	repo := Repo{Dir: testFolder}
 	if err := repo.Init(); err == nil {
-		t.Fatalf("Init succeeded when %s already exists", testFolder)
+		t.Errorf("Init succeeded when %s already exists", testFolder)
 	}
 
 	// Remove temporary test "directory"
