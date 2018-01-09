@@ -2,7 +2,6 @@ package srce
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 )
@@ -23,10 +22,7 @@ func (r Repo) Init() error {
 		}
 	}
 
-	err := ioutil.WriteFile(
-		filepath.Join(r.Dir, "HEAD"),
-		[]byte("ref: refs/heads/master\n"), 0644)
-	if err != nil {
+	if err := r.SetSymbolicRef("HEAD", "refs/heads/master"); err != nil {
 		return err
 	}
 

@@ -4,7 +4,6 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
-	"strings"
 )
 
 type Repo struct {
@@ -29,17 +28,6 @@ func (r Repo) Store(o Object) error {
 	if err := ioutil.WriteFile(objPath, o.contents.Bytes(), 0644); err != nil {
 		return err
 	}
-
-	return nil
-}
-
-func (r Repo) updateHead(sha1 string) error {
-	// get value of "ref: " from .srce/HEAD
-	head, err := ioutil.ReadFile(filepath.Join(r.Dir, "HEAD"))
-	if err != nil {
-		return err
-	}
-	r.UpdateRef(strings.TrimSpace(string(head[5:])), sha1)
 
 	return nil
 }

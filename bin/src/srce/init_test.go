@@ -2,7 +2,6 @@ package srce
 
 import (
 	"os"
-	"path/filepath"
 	"testing"
 )
 
@@ -19,9 +18,8 @@ func TestInit(t *testing.T) {
 	}
 
 	// Check that HEAD file was created
-	headFile := filepath.Join(testFolder, "HEAD")
-	if _, err := os.Stat(headFile); os.IsNotExist(err) {
-		t.Errorf("%s doesn't exist after Init", headFile)
+	if _, err := repo.GetSymbolicRef("HEAD"); os.IsNotExist(err) {
+		t.Error("HEAD doesn't exist after Init")
 	}
 
 	// Remove temporary test directory

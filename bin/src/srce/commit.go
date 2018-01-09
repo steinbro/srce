@@ -33,9 +33,11 @@ func (r Repo) Commit(message string) error {
 	r.Store(commitObj)
 
 	// Update .srce/refs/heads/master to point to commit object
-	if err := r.updateHead(commitObj.sha1); err != nil {
+	head, err := r.GetSymbolicRef("HEAD")
+	if err != nil {
 		return err
 	}
+	r.UpdateRef(head, commitObj.sha1)
 
 	// Reset .srce/index
 	if err := index.clear(); err != nil {
