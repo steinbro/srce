@@ -1,7 +1,6 @@
 package srce
 
 import (
-	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -40,17 +39,7 @@ func (r Repo) updateHead(sha1 string) error {
 	if err != nil {
 		return err
 	}
-	currentBranch := strings.TrimSpace(string(head[5:]))
+	r.UpdateRef(strings.TrimSpace(string(head[5:])), sha1)
 
-	// write hash to e.g. .srce/refs/heads/master
-	refFile, err := os.OpenFile(
-		filepath.Join(r.Dir, currentBranch), os.O_CREATE|os.O_WRONLY, 0644)
-	if err != nil {
-		return err
-	}
-	if _, err := refFile.Write([]byte(fmt.Sprintf("%s\n", sha1))); err != nil {
-		return err
-	}
-	refFile.Close()
 	return nil
 }

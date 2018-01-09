@@ -12,7 +12,6 @@ type Node struct {
 }
 
 func newNode(name string) *Node {
-	// SHA1 for tree is hash of dir name concatenated with ISO 8601 timestamp
 	return &Node{
 		name: name, sha1: timestampedHash(name), children: make(map[string]*Node)}
 }

@@ -19,7 +19,8 @@ type Object struct {
 }
 
 func timestampedHash(initial string) string {
-	timestamp := time.Now().UTC().Format("2006-01-02T15:04:05-0700")
+	// SHA1 for tree is hash of dir name concatenated with RFC3339 timestamp
+	timestamp := time.Now().UTC().Format(time.RFC3339)
 	sha := sha1.New()
 	sha.Write([]byte(fmt.Sprintf("%s %s", initial, timestamp)))
 	return hex.EncodeToString(sha.Sum(nil))
