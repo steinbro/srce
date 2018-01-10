@@ -50,18 +50,13 @@ func TestCommit(t *testing.T) {
 		t.Error("index not empty after commit")
 	}
 
-	ref := filepath.Join(repo.Dir, "refs", "heads", "master")
-	refValue, err := ioutil.ReadFile(ref)
+	refHash, err := repo.Resolve("master")
 	if err != nil {
 		t.Error(err)
-	} else if len(refValue) == 0 {
-		t.Error("refs/heads/master not updated")
 	}
-
-	refHash := strings.TrimSpace(string(refValue))
 	commitFile, err := repo.getObject(refHash)
 	if err != nil {
-		t.Errorf("master (%s) not in repo", refValue)
+		t.Errorf("master (%s) not in repo", refHash)
 	}
 
 	commitData, _ := ioutil.ReadAll(commitFile)

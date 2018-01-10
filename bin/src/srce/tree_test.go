@@ -30,7 +30,7 @@ func (n Node) _toString(out *[]string, indent int) {
 var treeTests = []struct {
 	description string
 	in          []string
-	out         string //Node
+	out         string
 }{
 	{"one file",
 		[]string{"foo"},

@@ -1,3 +1,4 @@
+export GOPATH=$(abspath ./bin/)
 TARGETS=$(notdir $(wildcard ./bin/cmd/*))
 
 all: $(TARGETS)

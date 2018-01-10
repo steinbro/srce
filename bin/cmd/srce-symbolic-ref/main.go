@@ -12,11 +12,11 @@ func main() {
 
 	if len(os.Args) == 2 {
 		name := os.Args[1]
-		ref, err := repo.GetSymbolicRef(name)
-		if err != nil {
+		if ref, err := repo.GetSymbolicRef(name); err != nil {
 			log.Fatal(err)
+		} else {
+			fmt.Println(ref)
 		}
-		fmt.Println(ref)
 
 	} else if len(os.Args) == 3 {
 		name := os.Args[1]
