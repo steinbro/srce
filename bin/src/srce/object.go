@@ -65,8 +65,8 @@ func commitObject(tree Object, message string) (Object, error) {
 	}
 	o.sha1 = timestampedHash(committer.Name)
 
-	o.contents.Write([]byte(fmt.Sprintf(
-		"tree %s\nauthor %s\n\n%s\n", tree.sha1, committer.Name, message)))
+	o.contents.WriteString(fmt.Sprintf(
+		"tree %s\nauthor %s\n\n%s\n", tree.sha1, committer.Name, message))
 
 	return o, nil
 }

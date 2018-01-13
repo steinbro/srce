@@ -47,18 +47,8 @@ func (r Repo) Store(o Object) error {
 	return nil
 }
 
-func (r Repo) Fetch(sha1 string) (Object, error) {
+func (r Repo) parseObject(buf *bytes.Buffer) (Object, error) {
 	var o Object
-	f, err := os.Open(filepath.Join(r.Dir, "objects", sha1[:2], sha1[2:]))
-	if err != nil {
-		return o, err
-	}
-	defer f.Close()
-
-	// Copy decompressed data into buffer
-	z, _ := zlib.NewReader(f)
-	buf := new(bytes.Buffer)
-	io.Copy(buf, z)
 
 	// Read raw data until null byte to populate header
 	header := new(bytes.Buffer)
@@ -77,8 +67,11 @@ func (r Repo) Fetch(sha1 string) (Object, error) {
 	}
 
 	// Extract object type and size from header
-	pattern, _ := regexp.Compile("([a-z]+) ([0-9]+)")
+	pattern, _ := regexp.Compile("^([a-z]+) ([0-9]+)$")
 	metadata := pattern.FindSubmatch(header.Bytes())
+	if len(metadata) != 3 {
+		return o, fmt.Errorf("malformed header: %q", header.String())
+	}
 	o.otype = string(metadata[1])
 	o.size, _ = strconv.Atoi(string(metadata[2]))
 
@@ -86,4 +79,22 @@ func (r Repo) Fetch(sha1 string) (Object, error) {
 	io.Copy(&o.contents, buf)
 
 	return o, nil
+}
+
+func (r Repo) Fetch(sha1 string) (Object, error) {
+	f, err := os.Open(filepath.Join(r.Dir, "objects", sha1[:2], sha1[2:]))
+	if err != nil {
+		return Object{}, err
+	}
+	defer f.Close()
+
+	// Copy decompressed data into buffer
+	buf := new(bytes.Buffer)
+	z, err := zlib.NewReader(f)
+	if err != nil {
+		return Object{}, err
+	}
+	io.Copy(buf, z)
+
+	return r.parseObject(buf)
 }
