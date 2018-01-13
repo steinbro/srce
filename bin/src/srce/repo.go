@@ -72,7 +72,7 @@ func (r Repo) Fetch(sha1 string) (Object, error) {
 		} else if c == '\u0000' {
 			break // end of header
 		} else {
-			header.WriteRune(c)  // append rune to header
+			header.WriteRune(c) // append rune to header
 		}
 	}
 
