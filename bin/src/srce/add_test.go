@@ -44,13 +44,13 @@ func TestAdd(t *testing.T) {
 	// New non-empty blob should exist
 	if blob, err := repo.Fetch(hash); err != nil {
 		t.Errorf("Blob %s unreadable", hash)
-	} else if blob.size == 0 {
+	} else if blob.Size() == 0 {
 		t.Errorf("Blob %s empty", hash)
-	} else if blob.otype != "blob" {
-		t.Errorf("Blob of wrong type (%s)", blob.otype)
-	} else if blob.contents.Len() != blob.size {
+	} else if blob.Type() != "blob" {
+		t.Errorf("Blob of wrong type (%s)", blob.Type())
+	} else if blob.Size() != len(blob.Contents()) {
 		t.Errorf(
-			"Blob header/size mismatch (%d != %d)", blob.size, blob.contents.Len())
+			"Blob header/size mismatch (%d != %d)", blob.Size(), len(blob.Contents()))
 	}
 	tearDown(t)
 }

@@ -17,6 +17,18 @@ type Object struct {
 	contents bytes.Buffer
 }
 
+func (o Object) Type() string {
+	return o.otype
+}
+
+func (o Object) Size() int {
+	return o.size
+}
+
+func (o Object) Contents() string {
+	return o.contents.String()
+}
+
 func timestampedHash(initial string) string {
 	// SHA1 for tree is hash of dir name concatenated with RFC3339 timestamp
 	timestamp := time.Now().UTC().Format(time.RFC3339)

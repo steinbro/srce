@@ -25,7 +25,7 @@ $ ./exe/srce commit "first commit"
 $ ./exe/srce rev-parse HEAD
 e160570596bcfc89bc296a0d4118bbe44637cabc
 
-$ cat .srce/objects/e1/60570596bcfc89bc296a0d4118bbe44637cabc
+$ ./exe/srce cat-file -p HEAD
 tree 9ddc1cd6eb70ab9f9c0e4537a6b7ca7bc2bc13bd
 author Daniel W. Steinbrook
 

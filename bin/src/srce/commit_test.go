@@ -20,8 +20,10 @@ func (r Repo) checkTree(t *testing.T, sha1 string) {
 		if parts[0] == "tree" {
 			r.checkTree(t, parts[1])
 		} else {
-			if _, err := r.Fetch(parts[1]); err != nil {
+			if o, err := r.Fetch(parts[1]); err != nil {
 				t.Error(err)
+			} else if parts[0] != o.Type() {
+				t.Errorf("object type mismatch (expected %s, got %s)", parts[0], o.Type())
 			}
 		}
 	}
@@ -52,7 +54,7 @@ func TestCommit(t *testing.T) {
 		t.Errorf("master (%s) not in repo", refHash)
 	}
 
-	commitData := commitObj.contents.String()
+	commitData := commitObj.Contents()
 	treeHash := string(commitData[5:45])
 	repo.checkTree(t, treeHash)
 
