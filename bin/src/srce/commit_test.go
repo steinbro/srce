@@ -2,34 +2,25 @@ package srce
 
 import (
 	"bufio"
-	"bytes"
-	"compress/zlib"
-	"io"
-	"os"
 	"path/filepath"
 	"strings"
 	"testing"
 )
 
-func (r Repo) getObject(sha1 string) (io.Reader, error) {
-	objData, _ := os.Open(filepath.Join(r.Dir, "objects", sha1[:2], sha1[2:]))
-	return zlib.NewReader(objData)
-}
-
 func (r Repo) checkTree(t *testing.T, sha1 string) {
-	objData, err := r.getObject(sha1)
+	obj, err := r.Fetch(sha1)
 	if err != nil {
 		t.Error(err)
 	}
 
-	scanner := bufio.NewScanner(objData)
+	scanner := bufio.NewScanner(&obj.contents)
 	for scanner.Scan() {
 		parts := strings.Split(scanner.Text(), " ")
 		t.Logf("looking for %s %s", parts[0], parts[1])
 		if parts[0] == "tree" {
 			r.checkTree(t, parts[1])
 		} else {
-			if _, err := r.getObject(parts[1]); err != nil {
+			if _, err := r.Fetch(parts[1]); err != nil {
 				t.Error(err)
 			}
 		}
@@ -56,14 +47,12 @@ func TestCommit(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	commitFile, err := repo.getObject(refHash)
+	commitObj, err := repo.Fetch(refHash)
 	if err != nil {
 		t.Errorf("master (%s) not in repo", refHash)
 	}
 
-	buf := new(bytes.Buffer)
-	buf.ReadFrom(commitFile)
-	commitData := buf.String()
+	commitData := commitObj.contents.String()
 	treeHash := string(commitData[5:45])
 	repo.checkTree(t, treeHash)
 

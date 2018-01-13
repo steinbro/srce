@@ -2,6 +2,7 @@ package srce
 
 import (
 	"compress/zlib"
+	"io"
 	"os"
 	"path/filepath"
 )
@@ -37,4 +38,17 @@ func (r Repo) Store(o Object) error {
 	w.Close()
 
 	return nil
+}
+
+func (r Repo) Fetch(sha1 string) (Object, error) {
+	var o Object
+	f, err := os.Open(filepath.Join(r.Dir, "objects", sha1[:2], sha1[2:]))
+	if err != nil {
+		return o, err
+	}
+	defer f.Close()
+
+	z, _ := zlib.NewReader(f)
+	io.Copy(&o.contents, z)
+	return o, nil
 }
