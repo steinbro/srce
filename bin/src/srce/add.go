@@ -17,7 +17,7 @@ func (r Repo) Add(path string) error {
 	}
 
 	// Write "<sha1> blob <path>" to .srce/index
-	if err := r.getIndex().add(o.sha1, o.otype, o.path); err != nil {
+	if err := r.getIndex().add(o.sha1, o.otype, path); err != nil {
 		return err
 	}
 

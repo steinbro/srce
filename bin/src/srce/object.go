@@ -12,8 +12,8 @@ import (
 
 type Object struct {
 	otype    string
-	path     string
 	sha1     string
+	size     int
 	contents bytes.Buffer
 }
 
@@ -26,7 +26,7 @@ func timestampedHash(initial string) string {
 }
 
 func blobOject(path string) (Object, error) {
-	o := Object{otype: "blob", path: path}
+	o := Object{otype: "blob"}
 
 	// Read file contents as byte array
 	contents, err := ioutil.ReadFile(path)

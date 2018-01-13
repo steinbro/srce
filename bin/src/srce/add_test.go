@@ -42,12 +42,15 @@ func TestAdd(t *testing.T) {
 	hash := (<-entries).sha1
 
 	// New non-empty blob should exist
-	blobPath := filepath.Join(repo.Dir, "objects", hash[:2], hash[2:])
-	stat, err := os.Stat(blobPath)
-	if err != nil {
-		t.Errorf("Blob file %s unreadable", blobPath)
-	} else if stat.Size() == 0 {
-		t.Errorf("Blob file %s empty", blobPath)
+	if blob, err := repo.Fetch(hash); err != nil {
+		t.Errorf("Blob %s unreadable", hash)
+	} else if blob.size == 0 {
+		t.Errorf("Blob %s empty", hash)
+	} else if blob.otype != "blob" {
+		t.Errorf("Blob of wrong type (%s)", blob.otype)
+	} else if blob.contents.Len() != blob.size {
+		t.Errorf(
+			"Blob header/size mismatch (%d != %d)", blob.size, blob.contents.Len())
 	}
 	tearDown(t)
 }

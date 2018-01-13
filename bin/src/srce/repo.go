@@ -1,10 +1,14 @@
 package srce
 
 import (
+	"bytes"
 	"compress/zlib"
+	"fmt"
 	"io"
 	"os"
 	"path/filepath"
+	"regexp"
+	"strconv"
 )
 
 type Repo struct {
@@ -34,6 +38,9 @@ func (r Repo) Store(o Object) error {
 
 	// Store compressed contents
 	w := zlib.NewWriter(objFile)
+	// Add header e.g. "blob 16", terminated by null byte
+	w.Write([]byte(fmt.Sprintf("%s %d", o.otype, o.contents.Len())))
+	w.Write([]byte("\u0000"))
 	o.contents.WriteTo(w)
 	w.Close()
 
@@ -48,7 +55,35 @@ func (r Repo) Fetch(sha1 string) (Object, error) {
 	}
 	defer f.Close()
 
+	// Copy decompressed data into buffer
 	z, _ := zlib.NewReader(f)
-	io.Copy(&o.contents, z)
+	buf := new(bytes.Buffer)
+	io.Copy(buf, z)
+
+	// Read raw data until null byte to populate header
+	header := new(bytes.Buffer)
+	for {
+		if c, _, err := buf.ReadRune(); err != nil {
+			if err == io.EOF {
+				break
+			} else {
+				return o, err
+			}
+		} else if c == '\u0000' {
+			break // end of header
+		} else {
+			header.WriteRune(c)  // append rune to header
+		}
+	}
+
+	// Extract object type and size from header
+	pattern, _ := regexp.Compile("([a-z]+) ([0-9]+)")
+	metadata := pattern.FindSubmatch(header.Bytes())
+	o.otype = string(metadata[1])
+	o.size, _ = strconv.Atoi(string(metadata[2]))
+
+	// Remaining raw data is uncompressed object contents
+	io.Copy(&o.contents, buf)
+
 	return o, nil
 }
