@@ -1,7 +1,7 @@
 package srce
 
 import (
-	"io/ioutil"
+	"compress/zlib"
 	"os"
 	"path/filepath"
 )
@@ -25,9 +25,16 @@ func (r Repo) Store(o Object) error {
 
 	// Write file contents to .srce/objects/00/rest_of_hash
 	objPath := filepath.Join(objFolder, o.sha1[2:])
-	if err := ioutil.WriteFile(objPath, o.contents.Bytes(), 0644); err != nil {
+	objFile, err := os.OpenFile(objPath, os.O_TRUNC|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
 		return err
 	}
+	defer objFile.Close()
+
+	// Store compressed contents
+	w := zlib.NewWriter(objFile)
+	o.contents.WriteTo(w)
+	w.Close()
 
 	return nil
 }

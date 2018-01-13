@@ -2,7 +2,6 @@ package srce
 
 import (
 	"bytes"
-	"compress/zlib"
 	"crypto/sha1"
 	"encoding/hex"
 	"fmt"
@@ -34,16 +33,12 @@ func blobOject(path string) (Object, error) {
 	if err != nil {
 		return o, err
 	}
+	o.contents.Write(contents)
 
 	// Compute SHA1 hash of file
 	sha := sha1.New()
 	sha.Write(contents)
 	o.sha1 = hex.EncodeToString(sha.Sum(nil))
-
-	// Store compressed contents
-	w := zlib.NewWriter(&o.contents)
-	w.Write(contents)
-	w.Close()
 
 	return o, nil
 }

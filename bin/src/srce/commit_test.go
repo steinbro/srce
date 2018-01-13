@@ -2,8 +2,9 @@ package srce
 
 import (
 	"bufio"
+	"bytes"
+	"compress/zlib"
 	"io"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -11,7 +12,8 @@ import (
 )
 
 func (r Repo) getObject(sha1 string) (io.Reader, error) {
-	return os.Open(filepath.Join(r.Dir, "objects", sha1[:2], sha1[2:]))
+	objData, _ := os.Open(filepath.Join(r.Dir, "objects", sha1[:2], sha1[2:]))
+	return zlib.NewReader(objData)
 }
 
 func (r Repo) checkTree(t *testing.T, sha1 string) {
@@ -59,7 +61,9 @@ func TestCommit(t *testing.T) {
 		t.Errorf("master (%s) not in repo", refHash)
 	}
 
-	commitData, _ := ioutil.ReadAll(commitFile)
+	buf := new(bytes.Buffer)
+	buf.ReadFrom(commitFile)
+	commitData := buf.String()
 	treeHash := string(commitData[5:45])
 	repo.checkTree(t, treeHash)
 
