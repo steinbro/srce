@@ -54,9 +54,11 @@ func TestCommit(t *testing.T) {
 		t.Errorf("master (%s) not in repo", refHash)
 	}
 
-	commitData := commitObj.Contents()
-	treeHash := string(commitData[5:45])
-	repo.checkTree(t, treeHash)
+	commit, err := repo.parseCommit(commitObj.contents)
+	if err != nil {
+		t.Error(err)
+	}
+	repo.checkTree(t, commit.tree)
 
 	tearDown(t)
 }

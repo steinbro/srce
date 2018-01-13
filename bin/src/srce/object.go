@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os/user"
+	"regexp"
 	"time"
 )
 
@@ -15,6 +16,12 @@ type Object struct {
 	sha1     string
 	size     int
 	contents bytes.Buffer
+}
+
+type Commit struct {
+	tree    string
+	author  string
+	message string
 }
 
 func (o Object) Type() string {
@@ -63,10 +70,20 @@ func commitObject(tree Object, message string) (Object, error) {
 	if err != nil {
 		return o, err
 	}
-	o.sha1 = timestampedHash(committer.Name)
+	o.sha1 = timestampedHash(committer.Username)
 
 	o.contents.WriteString(fmt.Sprintf(
-		"tree %s\nauthor %s\n\n%s\n", tree.sha1, committer.Name, message))
+		"tree %s\nauthor %s\n\n%s\n", tree.sha1, committer.Username, message))
 
 	return o, nil
+}
+
+func (r Repo) parseCommit(contents bytes.Buffer) (Commit, error) {
+	pattern, _ := regexp.Compile(
+		"^tree ([0-9a-f]{40})\nauthor ([^\n]+)\n\n(.+)\n$")
+	m := pattern.FindStringSubmatch(contents.String())
+	if len(m) != 4 {
+		return Commit{}, fmt.Errorf("malformed commit: %q", contents.String())
+	}
+	return Commit{tree: m[1], author: m[2], message: m[3]}, nil
 }

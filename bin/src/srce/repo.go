@@ -68,12 +68,12 @@ func (r Repo) parseObject(buf *bytes.Buffer) (Object, error) {
 
 	// Extract object type and size from header
 	pattern, _ := regexp.Compile("^([a-z]+) ([0-9]+)$")
-	metadata := pattern.FindSubmatch(header.Bytes())
+	metadata := pattern.FindStringSubmatch(header.String())
 	if len(metadata) != 3 {
 		return o, fmt.Errorf("malformed header: %q", header.String())
 	}
-	o.otype = string(metadata[1])
-	o.size, _ = strconv.Atoi(string(metadata[2]))
+	o.otype = metadata[1]
+	o.size, _ = strconv.Atoi(metadata[2])
 
 	// Remaining raw data is uncompressed object contents
 	io.Copy(&o.contents, buf)
