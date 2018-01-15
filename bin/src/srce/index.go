@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"fmt"
 	"os"
-	"path/filepath"
 	"strings"
 )
 
@@ -26,12 +25,12 @@ func parseIndexEntry(line string) IndexEntry {
 	return IndexEntry{sha1: parts[0], itype: parts[1], path: parts[2]}
 }
 
-func (i IndexEntry) toBytes() []byte {
-	return []byte(fmt.Sprintf("%s %s %s\n", i.sha1, i.itype, i.path))
+func (i IndexEntry) toString() string {
+	return fmt.Sprintf("%s %s %s\n", i.sha1, i.itype, i.path)
 }
 
 func (r Repo) getIndex() Index {
-	return Index{path: filepath.Join(r.Dir, "index")}
+	return Index{path: r.internalPath("index")}
 }
 
 func (i Index) read() (<-chan IndexEntry, error) {
@@ -59,7 +58,7 @@ func (i Index) add(hash, itype, path string) error {
 	if err != nil {
 		return err
 	}
-	if _, err := indexFile.Write(entry.toBytes()); err != nil {
+	if _, err := indexFile.WriteString(entry.toString()); err != nil {
 		return err
 	}
 	indexFile.Close()

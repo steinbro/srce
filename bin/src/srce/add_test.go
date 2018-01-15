@@ -2,7 +2,6 @@ package srce
 
 import (
 	"os"
-	"path/filepath"
 	"testing"
 )
 
@@ -29,7 +28,7 @@ func tearDown(t *testing.T) {
 func TestAdd(t *testing.T) {
 	repo := setUp(t)
 	// Check no errors are raised
-	testFile := filepath.Join(repo.Dir, "HEAD")
+	testFile := repo.internalPath("HEAD")
 	if err := repo.Add(testFile); err != nil {
 		t.Fatal(err)
 	}
@@ -81,7 +80,7 @@ func TestAddUnwritable(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	testFile := filepath.Join(repo.Dir, "HEAD")
+	testFile := repo.internalPath("HEAD")
 	if err := repo.Add(testFile); err == nil {
 		t.Fatal("Add to non-writable project succeeded")
 	} else {

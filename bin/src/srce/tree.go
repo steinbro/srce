@@ -38,11 +38,9 @@ func (r Repo) storeTree(n *Node) Object {
 	for _, c := range n.children {
 		if len(c.children) > 0 {
 			r.storeTree(c)
-			treeObj.contents.Write([]byte(
-				fmt.Sprintf("tree %s %s\n", c.sha1, c.name)))
+			treeObj.contents.WriteString(fmt.Sprintf("tree %s %s\n", c.sha1, c.name))
 		} else {
-			treeObj.contents.Write([]byte(
-				fmt.Sprintf("blob %s %s\n", c.sha1, c.name)))
+			treeObj.contents.WriteString(fmt.Sprintf("blob %s %s\n", c.sha1, c.name))
 		}
 	}
 	r.Store(treeObj)

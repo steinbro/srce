@@ -2,7 +2,6 @@ package srce
 
 import (
 	"bufio"
-	"path/filepath"
 	"strings"
 	"testing"
 )
@@ -32,7 +31,7 @@ func (r Repo) checkTree(t *testing.T, sha1 string) {
 func TestCommit(t *testing.T) {
 	repo := setUp(t)
 
-	testFile := filepath.Join(repo.Dir, "HEAD")
+	testFile := repo.internalPath("HEAD")
 	if err := repo.Add(testFile); err != nil {
 		t.Fatal(err)
 	}
@@ -54,7 +53,7 @@ func TestCommit(t *testing.T) {
 		t.Errorf("master (%s) not in repo", refHash)
 	}
 
-	commit, err := repo.parseCommit(commitObj.contents)
+	commit, err := parseCommit(commitObj.contents)
 	if err != nil {
 		t.Error(err)
 	}

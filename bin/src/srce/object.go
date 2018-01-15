@@ -78,7 +78,7 @@ func commitObject(tree Object, message string) (Object, error) {
 	return o, nil
 }
 
-func (r Repo) parseCommit(contents bytes.Buffer) (Commit, error) {
+func parseCommit(contents bytes.Buffer) (Commit, error) {
 	pattern, _ := regexp.Compile(
 		"^tree ([0-9a-f]{40})\nauthor ([^\n]+)\n\n(.+)\n$")
 	m := pattern.FindStringSubmatch(contents.String())

@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"path/filepath"
 	"regexp"
 	"strconv"
 )
@@ -23,13 +22,13 @@ func (r Repo) IsInitialized() bool {
 
 func (r Repo) Store(o Object) error {
 	// Create .srce/objects/00/ directory (where 00 is the first 2 bytes of hash)
-	objFolder := filepath.Join(r.Dir, "objects", o.sha1[:2])
+	objFolder := r.internalPath("objects", o.sha1[:2])
 	if err := os.MkdirAll(objFolder, 0700); err != nil {
 		return err
 	}
 
 	// Write file contents to .srce/objects/00/rest_of_hash
-	objPath := filepath.Join(objFolder, o.sha1[2:])
+	objPath := r.internalPath("objects", o.sha1[:2], o.sha1[2:])
 	objFile, err := os.OpenFile(objPath, os.O_TRUNC|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		return err
@@ -82,7 +81,7 @@ func (r Repo) parseObject(buf *bytes.Buffer) (Object, error) {
 }
 
 func (r Repo) Fetch(sha1 string) (Object, error) {
-	f, err := os.Open(filepath.Join(r.Dir, "objects", sha1[:2], sha1[2:]))
+	f, err := os.Open(r.internalPath("objects", sha1[:2], sha1[2:]))
 	if err != nil {
 		return Object{}, err
 	}
