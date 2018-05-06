@@ -20,6 +20,7 @@ func TestResolve(t *testing.T) {
 		"undefined",
 		hash[:3],
 		"index",
+		"../../HEAD",
 		"../../../../../../../../../../etc/passwd",
 	}
 	for _, input := range badRefs {

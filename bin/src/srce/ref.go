@@ -67,6 +67,10 @@ func (r Repo) Resolve(name string) (string, error) {
 
 	// is it a branch, or a special name referring to a branch?
 	possibleRef := r.internalPath("refs", "heads", name)
+	// prevent relative paths, e.g. "../../HEAD"
+	if !strings.HasSuffix(possibleRef, name) {
+		return "", fmt.Errorf("bad ref: %s", name)
+	}
 	if ref, err := r.GetSymbolicRef(name); err == nil {
 		// already includes the refs/heads part
 		possibleRef = r.internalPath(ref)
