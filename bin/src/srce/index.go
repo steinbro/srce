@@ -74,3 +74,21 @@ func (i Index) clear() error {
 	indexFile.Close()
 	return nil
 }
+
+func (r Repo) Status() error {
+	if !r.IsInitialized() {
+		return fmt.Errorf("not a srce project")
+	}
+
+	index := r.getIndex()
+	entries, err := index.read()
+	if err != nil {
+		return err
+	}
+
+	for e := range entries {
+		fmt.Printf("M\t%s\n", e.path)
+	}
+
+	return nil
+}

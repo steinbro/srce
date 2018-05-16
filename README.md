@@ -17,8 +17,8 @@ srce initialized in .srce
 
 $ ./exe/srce add LICENSE
 
-$ cat .srce/index
-6f53920efa5dee5a54d4f5f6b07f5d7f07c1710f blob LICENSE
+$ ./exe/srce status
+M	LICENSE
 
 $ ./exe/srce commit "first commit"
 
