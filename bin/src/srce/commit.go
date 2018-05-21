@@ -26,7 +26,14 @@ func (r Repo) Commit(message string) error {
 	}
 	treeObj := r.storeTree(root)
 
-	commitObj, err := commitObject(treeObj, message)
+	// Use current HEAD as parent commit
+	parentHash, err := r.Resolve("HEAD")
+	if err != nil {
+		// no valid HEAD (is this the first commit?)
+		parentHash = ""
+	}
+
+	commitObj, err := commitObject(treeObj, parentHash, message)
 	if err != nil {
 		return err
 	}

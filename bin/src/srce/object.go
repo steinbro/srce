@@ -1,13 +1,14 @@
 package srce
 
 import (
+	"bufio"
 	"bytes"
 	"crypto/sha1"
 	"encoding/hex"
 	"fmt"
 	"io/ioutil"
 	"os/user"
-	"regexp"
+	"strings"
 	"time"
 )
 
@@ -21,6 +22,7 @@ type Object struct {
 type Commit struct {
 	tree    string
 	author  string
+	parent  string
 	message string
 }
 
@@ -62,7 +64,7 @@ func blobOject(path string) (Object, error) {
 	return o, nil
 }
 
-func commitObject(tree Object, message string) (Object, error) {
+func commitObject(tree Object, parentHash string, message string) (Object, error) {
 	o := Object{otype: "commit"}
 
 	// Use current OS user as committer
@@ -72,18 +74,44 @@ func commitObject(tree Object, message string) (Object, error) {
 	}
 	o.sha1 = timestampedHash(committer.Username)
 
-	o.contents.WriteString(fmt.Sprintf(
-		"tree %s\nauthor %s\n\n%s\n", tree.sha1, committer.Username, message))
+	o.contents.WriteString(fmt.Sprintf("tree %s\n", tree.sha1))
+	if parentHash != "" {
+		o.contents.WriteString(fmt.Sprintf("parent %s\n", parentHash))
+	}
+	o.contents.WriteString(fmt.Sprintf("author %s\n", committer.Username))
+	o.contents.WriteString(fmt.Sprintf("\n%s\n", message))
 
 	return o, nil
 }
 
 func parseCommit(contents bytes.Buffer) (Commit, error) {
-	pattern, _ := regexp.Compile(
-		"^tree ([0-9a-f]{40})\nauthor ([^\n]+)\n\n(.+)\n$")
-	m := pattern.FindStringSubmatch(contents.String())
-	if len(m) != 4 {
-		return Commit{}, fmt.Errorf("malformed commit: %q", contents.String())
+	commit := Commit{}
+	scanner := bufio.NewScanner(bytes.NewReader(contents.Bytes()))
+
+	for scanner.Scan() {
+		line := scanner.Text()
+
+		// blank line separates header from commit message
+		if line == "" {
+			for scanner.Scan() {
+				commit.message += scanner.Text()
+			}
+			break // nothing left in commit body
+		}
+
+		parts := strings.SplitN(line, " ", 2)
+		key, value := parts[0], parts[1]
+
+		if key == "tree" {
+			commit.tree = value
+		} else if key == "author" {
+			commit.author = value
+		} else if key == "parent" {
+			commit.parent = value
+		} else {
+			return Commit{}, fmt.Errorf("unrecognized field in commit header: %q", key)
+		}
 	}
-	return Commit{tree: m[1], author: m[2], message: m[3]}, nil
+
+	return commit, nil
 }

@@ -28,27 +28,23 @@ func (r Repo) checkTree(t *testing.T, sha1 string) {
 	}
 }
 
-func TestCommit(t *testing.T) {
-	repo := setUp(t)
-
-	testFile := repo.internalPath("HEAD")
-	if err := repo.Add(testFile); err != nil {
+func (r Repo) commitSomething(t *testing.T) {
+	testFile := r.internalPath("HEAD")
+	if err := r.Add(testFile); err != nil {
 		t.Fatal(err)
 	}
 
-	if err := repo.Commit("test commit"); err != nil {
+	if err := r.Commit("test commit"); err != nil {
 		t.Fatal(err)
 	}
+}
 
-	if entries, _ := repo.getIndex().read(); len(entries) > 0 {
-		t.Error("index not empty after commit")
-	}
-
-	refHash, err := repo.Resolve("master")
+func (r Repo) getLastCommit(t *testing.T) (string, Commit) {
+	refHash, err := r.Resolve("master")
 	if err != nil {
 		t.Error(err)
 	}
-	commitObj, err := repo.Fetch(refHash)
+	commitObj, err := r.Fetch(refHash)
 	if err != nil {
 		t.Errorf("master (%s) not in repo", refHash)
 	}
@@ -57,6 +53,19 @@ func TestCommit(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
+	return refHash, commit
+}
+
+func TestCommit(t *testing.T) {
+	repo := setUp(t)
+
+	repo.commitSomething(t)
+
+	if entries, _ := repo.getIndex().read(); len(entries) > 0 {
+		t.Error("index not empty after commit")
+	}
+
+	_, commit := repo.getLastCommit(t)
 	repo.checkTree(t, commit.tree)
 
 	tearDown(t)
@@ -67,5 +76,26 @@ func TestCommitEmpty(t *testing.T) {
 	if err := repo.Commit("test commit"); err == nil {
 		t.Error("empty commit succeeded")
 	}
+	tearDown(t)
+}
+
+func TestCommitParent(t *testing.T) {
+	repo := setUp(t)
+
+	repo.commitSomething(t)
+	hash1, commit1 := repo.getLastCommit(t)
+	if commit1.parent != "" {
+		t.Error("parent of first commit not empty")
+	}
+
+	repo.commitSomething(t)
+	_, commit2 := repo.getLastCommit(t)
+	if commit2.parent != hash1 {
+		t.Error("first commit is not parent of second commit")
+	}
+	if commit2.message != "test commit" {
+		t.Errorf("unexpected commit message (%q)", commit2.message)
+	}
+
 	tearDown(t)
 }
