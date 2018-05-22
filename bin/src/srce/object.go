@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os/user"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -21,8 +22,9 @@ type Object struct {
 
 type Commit struct {
 	tree    string
-	author  string
 	parent  string
+	author  string
+	date    time.Time
 	message string
 }
 
@@ -74,11 +76,14 @@ func commitObject(tree Object, parentHash string, message string) (Object, error
 	}
 	o.sha1 = timestampedHash(committer.Username)
 
+	commitDate := time.Now()
+
 	o.contents.WriteString(fmt.Sprintf("tree %s\n", tree.sha1))
 	if parentHash != "" {
 		o.contents.WriteString(fmt.Sprintf("parent %s\n", parentHash))
 	}
-	o.contents.WriteString(fmt.Sprintf("author %s\n", committer.Username))
+	o.contents.WriteString(fmt.Sprintf(
+		"author %s %d\n", committer.Username, commitDate.Unix()))
 	o.contents.WriteString(fmt.Sprintf("\n%s\n", message))
 
 	return o, nil
@@ -105,7 +110,14 @@ func parseCommit(contents bytes.Buffer) (Commit, error) {
 		if key == "tree" {
 			commit.tree = value
 		} else if key == "author" {
-			commit.author = value
+			authorAndDate := strings.SplitN(value, " ", 2)
+			commit.author = authorAndDate[0]
+			timestamp, err := strconv.ParseInt(authorAndDate[1], 10, 64)
+			if err != nil {
+					return Commit{}, fmt.Errorf(
+						"invalid commit timestamp: %q", authorAndDate[1])
+			}
+			commit.date = time.Unix(timestamp, 0)
 		} else if key == "parent" {
 			commit.parent = value
 		} else {
