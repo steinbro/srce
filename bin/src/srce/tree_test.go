@@ -66,7 +66,7 @@ func TestTree(t *testing.T) {
 }
 
 func TestTreeHash(t *testing.T) {
-	desired_hash := "deadbeef"
+	desired_hash := Hash("deadbeef")
 	tree := makeTree()
 	tree.add("foo/bar", desired_hash)
 

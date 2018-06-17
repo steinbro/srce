@@ -7,7 +7,7 @@ import (
 
 type Node struct {
 	name     string
-	sha1     string
+	sha1     Hash
 	children map[string]*Node
 }
 
@@ -20,7 +20,7 @@ func makeTree() *Node {
 	return newNode("root")
 }
 
-func (n *Node) add(path, sha1 string) {
+func (n *Node) add(path string, sha1 Hash) {
 	pathComponents := strings.Split(path, "/")
 	this := n
 	for _, thing := range pathComponents {

@@ -22,13 +22,13 @@ func (r Repo) IsInitialized() bool {
 
 func (r Repo) Store(o Object) error {
 	// Create .srce/objects/00/ directory (where 00 is the first 2 bytes of hash)
-	objFolder := r.internalPath("objects", o.sha1[:2])
+	objFolder := r.internalPath("objects", o.sha1.prefix())
 	if err := os.MkdirAll(objFolder, 0700); err != nil {
 		return err
 	}
 
 	// Write file contents to .srce/objects/00/rest_of_hash
-	objPath := r.internalPath("objects", o.sha1[:2], o.sha1[2:])
+	objPath := r.internalPath("objects", o.sha1.prefix(), o.sha1.remainder())
 	objFile, err := os.OpenFile(objPath, os.O_TRUNC|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		return err
@@ -80,8 +80,8 @@ func (r Repo) parseObject(buf *bytes.Buffer) (Object, error) {
 	return o, nil
 }
 
-func (r Repo) Fetch(sha1 string) (Object, error) {
-	f, err := os.Open(r.internalPath("objects", sha1[:2], sha1[2:]))
+func (r Repo) Fetch(sha1 Hash) (Object, error) {
+	f, err := os.Open(r.internalPath("objects", sha1.prefix(), sha1.remainder()))
 	if err != nil {
 		return Object{}, err
 	}

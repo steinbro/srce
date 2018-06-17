@@ -12,7 +12,7 @@ type Index struct {
 }
 
 type IndexEntry struct {
-	sha1  string
+	sha1  Hash
 	itype string
 	path  string
 }
@@ -22,7 +22,7 @@ func parseIndexEntry(line string) IndexEntry {
 	if len(parts) != 3 {
 		return IndexEntry{}
 	}
-	return IndexEntry{sha1: parts[0], itype: parts[1], path: parts[2]}
+	return IndexEntry{sha1: Hash(parts[0]), itype: parts[1], path: parts[2]}
 }
 
 func (i IndexEntry) toString() string {
@@ -52,8 +52,8 @@ func (i Index) read() (<-chan IndexEntry, error) {
 	return ch, nil
 }
 
-func (i Index) add(hash, itype, path string) error {
-	entry := IndexEntry{sha1: hash, itype: itype, path: path}
+func (i Index) add(sha1 Hash, itype, path string) error {
+	entry := IndexEntry{sha1: sha1, itype: itype, path: path}
 	indexFile, err := os.OpenFile(i.path, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		return err

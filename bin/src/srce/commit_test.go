@@ -6,7 +6,7 @@ import (
 	"testing"
 )
 
-func (r Repo) checkTree(t *testing.T, sha1 string) {
+func (r Repo) checkTree(t *testing.T, sha1 Hash) {
 	obj, err := r.Fetch(sha1)
 	if err != nil {
 		t.Error(err)
@@ -15,13 +15,15 @@ func (r Repo) checkTree(t *testing.T, sha1 string) {
 	scanner := bufio.NewScanner(&obj.contents)
 	for scanner.Scan() {
 		parts := strings.Split(scanner.Text(), " ")
-		t.Logf("looking for %s %s", parts[0], parts[1])
+		otype := parts[0]
+		ohash := Hash(parts[1])
+		t.Logf("looking for %s %s", otype, ohash)
 		if parts[0] == "tree" {
-			r.checkTree(t, parts[1])
+			r.checkTree(t, ohash)
 		} else {
-			if o, err := r.Fetch(parts[1]); err != nil {
+			if o, err := r.Fetch(ohash); err != nil {
 				t.Error(err)
-			} else if parts[0] != o.Type() {
+			} else if otype != o.Type() {
 				t.Errorf("object type mismatch (expected %s, got %s)", parts[0], o.Type())
 			}
 		}
@@ -39,7 +41,7 @@ func (r Repo) commitSomething(t *testing.T) {
 	}
 }
 
-func (r Repo) getLastCommit(t *testing.T) (string, Commit) {
+func (r Repo) getLastCommit(t *testing.T) (Hash, Commit) {
 	refHash, err := r.Resolve("master")
 	if err != nil {
 		t.Error(err)

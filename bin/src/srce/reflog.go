@@ -12,8 +12,8 @@ type RefLog struct {
 }
 
 type RefLogEntry struct {
-	sha1Before string
-	sha1After  string
+	sha1Before Hash
+	sha1After  Hash
 	author     string
 	message    string
 }
@@ -25,7 +25,7 @@ func parseRefLogEntry(line string) RefLogEntry {
 		return RefLogEntry{}
 	}
 	return RefLogEntry{
-		sha1Before: parts[1], sha1After: parts[2], author: parts[3],
+		sha1Before: Hash(parts[1]), sha1After: Hash(parts[2]), author: parts[3],
 		message: parts[4]}
 }
 
@@ -57,7 +57,7 @@ func (rl RefLog) read() (<-chan RefLogEntry, error) {
 	return ch, nil
 }
 
-func (rl RefLog) add(sha1Before, sha1After, author, message string) error {
+func (rl RefLog) add(sha1Before, sha1After Hash, author, message string) error {
 	entry := RefLogEntry{
 		sha1Before: sha1Before, sha1After: sha1After, author: author,
 		message: message}
@@ -86,7 +86,8 @@ func (r Repo) RefLog(ref string) error {
 
 	i := 0
 	for rle := range entries {
-		fmt.Printf("%s %s@{%d}: %s\n", rle.sha1After[:8], ref, i, rle.message)
+		fmt.Printf(
+			"%s %s@{%d}: %s\n", rle.sha1After.abbreviated(), ref, i, rle.message)
 		i++
 	}
 

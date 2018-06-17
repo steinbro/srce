@@ -13,18 +13,18 @@ import (
 	"time"
 )
 
-const INITIAL_COMMIT_HASH = "0000000000000000000000000000000000000000"
+const INITIAL_COMMIT_HASH = Hash("0000000000000000000000000000000000000000")
 
 type Object struct {
 	otype    string
-	sha1     string
+	sha1     Hash
 	size     int
 	contents bytes.Buffer
 }
 
 type Commit struct {
-	tree    string
-	parent  string
+	tree    Hash
+	parent  Hash
 	author  string
 	date    time.Time
 	message string
@@ -42,12 +42,12 @@ func (o Object) Contents() string {
 	return o.contents.String()
 }
 
-func timestampedHash(initial string) string {
+func timestampedHash(initial string) Hash {
 	// SHA1 for tree is hash of dir name concatenated with RFC3339 timestamp
 	timestamp := time.Now().UTC().Format(time.RFC3339)
 	sha := sha1.New()
 	sha.Write([]byte(fmt.Sprintf("%s %s", initial, timestamp)))
-	return hex.EncodeToString(sha.Sum(nil))
+	return Hash(hex.EncodeToString(sha.Sum(nil)))
 }
 
 func blobOject(path string) (Object, error) {
@@ -63,12 +63,12 @@ func blobOject(path string) (Object, error) {
 	// Compute SHA1 hash of file
 	sha := sha1.New()
 	sha.Write(contents)
-	o.sha1 = hex.EncodeToString(sha.Sum(nil))
+	o.sha1 = Hash(hex.EncodeToString(sha.Sum(nil)))
 
 	return o, nil
 }
 
-func commitObject(tree Object, parentHash string, message string) (Object, error) {
+func commitObject(tree Object, parentHash Hash, message string) (Object, error) {
 	o := Object{otype: "commit"}
 
 	// Use current OS user as committer
@@ -109,8 +109,11 @@ func parseCommit(contents bytes.Buffer) (Commit, error) {
 		parts := strings.SplitN(line, " ", 2)
 		key, value := parts[0], parts[1]
 
+		var err error
 		if key == "tree" {
-			commit.tree = value
+			if commit.tree, err = ValidateHash(value); err != nil {
+				return Commit{}, err
+			}
 		} else if key == "author" {
 			authorAndDate := strings.SplitN(value, " ", 2)
 			commit.author = authorAndDate[0]
@@ -121,7 +124,9 @@ func parseCommit(contents bytes.Buffer) (Commit, error) {
 			}
 			commit.date = time.Unix(timestamp, 0)
 		} else if key == "parent" {
-			commit.parent = value
+			if commit.parent, err = ValidateHash(value); err != nil {
+				return Commit{}, err
+			}
 		} else {
 			return Commit{}, fmt.Errorf("unrecognized field in commit header: %q", key)
 		}

@@ -9,7 +9,7 @@ func TestResolve(t *testing.T) {
 	hash, _ := repo.Resolve("HEAD")
 
 	// good cases
-	for _, input := range []string{"master", hash, hash[:4]} {
+	for _, input := range []string{"master", string(hash), string(hash[:4])} {
 		if result, _ := repo.Resolve(input); result != hash {
 			t.Errorf("Resolve(%q) = %q (expecting %q)", input, result, hash)
 		}
@@ -18,7 +18,7 @@ func TestResolve(t *testing.T) {
 	// bad cases
 	badRefs := []string{
 		"undefined",
-		hash[:3],
+		string(hash[:3]),
 		"index",
 		"../../HEAD",
 		"../../../../../../../../../../etc/passwd",
