@@ -13,6 +13,8 @@ import (
 	"time"
 )
 
+const INITIAL_COMMIT_HASH = "0000000000000000000000000000000000000000"
+
 type Object struct {
 	otype    string
 	sha1     string
@@ -79,7 +81,7 @@ func commitObject(tree Object, parentHash string, message string) (Object, error
 	commitDate := time.Now()
 
 	o.contents.WriteString(fmt.Sprintf("tree %s\n", tree.sha1))
-	if parentHash != "" {
+	if parentHash != INITIAL_COMMIT_HASH {
 		o.contents.WriteString(fmt.Sprintf("parent %s\n", parentHash))
 	}
 	o.contents.WriteString(fmt.Sprintf(
@@ -114,8 +116,8 @@ func parseCommit(contents bytes.Buffer) (Commit, error) {
 			commit.author = authorAndDate[0]
 			timestamp, err := strconv.ParseInt(authorAndDate[1], 10, 64)
 			if err != nil {
-					return Commit{}, fmt.Errorf(
-						"invalid commit timestamp: %q", authorAndDate[1])
+				return Commit{}, fmt.Errorf(
+					"invalid commit timestamp: %q", authorAndDate[1])
 			}
 			commit.date = time.Unix(timestamp, 0)
 		} else if key == "parent" {

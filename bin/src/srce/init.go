@@ -14,7 +14,8 @@ func (r Repo) Init() error {
 		return fmt.Errorf("%s already exists", r.Dir)
 	}
 
-	subdirs := []string{"objects/info", "objects/pack", "refs/heads", "refs/tags"}
+	subdirs := []string{
+		"objects/info", "objects/pack", "refs/heads", "refs/tags", "logs/refs/heads"}
 	for _, subdir := range subdirs {
 		if err := os.MkdirAll(r.internalPath(subdir), 0700); err != nil {
 			return err

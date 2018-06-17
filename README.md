@@ -25,9 +25,14 @@ $ ./exe/srce commit "first commit"
 $ ./exe/srce rev-parse HEAD
 e160570596bcfc89bc296a0d4118bbe44637cabc
 
-$ ./exe/srce cat-file -p HEAD
-tree 9ddc1cd6eb70ab9f9c0e4537a6b7ca7bc2bc13bd
-author steinbro
+$ ./exe/srce log
+commit e160570596bcfc89bc296a0d4118bbe44637cabc
+Author: steinbro
+Date:   Mon May 21 20:25:57 2018 -0400
 
-first commit
+	first commit
+
+$ ./exe/srce reflog
+e1605705 HEAD@{0}: commit: first commit
+
 ```

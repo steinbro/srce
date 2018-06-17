@@ -30,7 +30,7 @@ func (r Repo) Commit(message string) error {
 	parentHash, err := r.Resolve("HEAD")
 	if err != nil {
 		// no valid HEAD (is this the first commit?)
-		parentHash = ""
+		parentHash = INITIAL_COMMIT_HASH
 	}
 
 	commitObj, err := commitObject(treeObj, parentHash, message)
@@ -40,11 +40,25 @@ func (r Repo) Commit(message string) error {
 	r.Store(commitObj)
 
 	// Update .srce/refs/heads/master to point to commit object
-	head, err := r.GetSymbolicRef("HEAD")
+	branch, err := r.GetSymbolicRef("HEAD")
 	if err != nil {
 		return err
 	}
-	r.UpdateRef(head, commitObj.sha1)
+	r.UpdateRef(branch, commitObj.sha1)
+
+	// update reflog (for both HEAD and branch)
+	refMessage := fmt.Sprintf("commit: %s", message)
+	c, _ := parseCommit(commitObj.contents)
+
+	headRefLog := r.getRefLog("HEAD")
+	headRefLog.add(parentHash, commitObj.sha1, c.author, refMessage)
+
+	oldBranchHash, err := r.Resolve(branch)
+	if err != nil {
+		oldBranchHash = INITIAL_COMMIT_HASH
+	}
+	branchRefLog := r.getRefLog(branch)
+	branchRefLog.add(oldBranchHash, commitObj.sha1, c.author, refMessage)
 
 	// Reset .srce/index
 	if err := index.clear(); err != nil {
