@@ -34,7 +34,7 @@ func (n *Node) add(path string, sha1 Hash) {
 }
 
 func (r Repo) storeTree(n *Node) Object {
-	treeObj := Object{otype: "tree", sha1: n.sha1}
+	treeObj := Object{otype: TreeObject, sha1: n.sha1}
 	for _, c := range n.children {
 		if len(c.children) > 0 {
 			r.storeTree(c)

@@ -71,7 +71,7 @@ func (r Repo) parseObject(buf *bytes.Buffer) (Object, error) {
 	if len(metadata) != 3 {
 		return o, fmt.Errorf("malformed header: %q", header.String())
 	}
-	o.otype = metadata[1]
+	o.otype = ObjectType(metadata[1])
 	o.size, _ = strconv.Atoi(metadata[2])
 
 	// Remaining raw data is uncompressed object contents

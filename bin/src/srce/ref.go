@@ -78,13 +78,13 @@ func (r Repo) Resolve(name string) (Hash, error) {
 
 	// is it a branch?
 	if refValue, err := ioutil.ReadFile(possibleRef); err == nil {
-		return Hash(strings.TrimSpace(string(refValue))), nil
+		return ValidateHash(strings.TrimSpace(string(refValue)))
 	}
 
 	// finally, is it an object hash, or unambiguous prefix?
-	hash, err := ValidateHash(name)
-	if err != nil {
+	if hash, err := ValidateHash(name); err == nil {
+		return r.ExpandPartialHash(hash)
+	} else {
 		return Hash(""), err
 	}
-	return r.ExpandPartialHash(hash)
 }

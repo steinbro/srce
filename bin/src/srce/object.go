@@ -15,8 +15,16 @@ import (
 
 const INITIAL_COMMIT_HASH = Hash("0000000000000000000000000000000000000000")
 
+type ObjectType string
+
+const (
+	BlobObject   ObjectType = "blob"
+	CommitObject ObjectType = "commit"
+	TreeObject   ObjectType = "tree"
+)
+
 type Object struct {
-	otype    string
+	otype    ObjectType
 	sha1     Hash
 	size     int
 	contents bytes.Buffer
@@ -30,7 +38,7 @@ type Commit struct {
 	message string
 }
 
-func (o Object) Type() string {
+func (o Object) Type() ObjectType {
 	return o.otype
 }
 
@@ -51,7 +59,7 @@ func timestampedHash(initial string) Hash {
 }
 
 func blobOject(path string) (Object, error) {
-	o := Object{otype: "blob"}
+	o := Object{otype: BlobObject}
 
 	// Read file contents as byte array
 	contents, err := ioutil.ReadFile(path)
@@ -69,7 +77,7 @@ func blobOject(path string) (Object, error) {
 }
 
 func commitObject(tree Object, parentHash Hash, message string) (Object, error) {
-	o := Object{otype: "commit"}
+	o := Object{otype: CommitObject}
 
 	// Use current OS user as committer
 	committer, err := user.Current()

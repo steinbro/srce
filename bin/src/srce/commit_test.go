@@ -15,10 +15,10 @@ func (r Repo) checkTree(t *testing.T, sha1 Hash) {
 	scanner := bufio.NewScanner(&obj.contents)
 	for scanner.Scan() {
 		parts := strings.Split(scanner.Text(), " ")
-		otype := parts[0]
+		otype := ObjectType(parts[0])
 		ohash := Hash(parts[1])
 		t.Logf("looking for %s %s", otype, ohash)
-		if parts[0] == "tree" {
+		if otype == TreeObject {
 			r.checkTree(t, ohash)
 		} else {
 			if o, err := r.Fetch(ohash); err != nil {
