@@ -26,8 +26,9 @@ func (r Repo) Log() error {
 		}
 
 		fmt.Printf("commit %s\n", hash)
-		fmt.Printf("Author: %s\n", c.author)
-		fmt.Printf("Date:   %s\n", c.date.Format("Mon Jan 2 15:04:05 2006 -0700"))
+		fmt.Printf("Author: %s\n", c.author.user)
+		fmt.Printf(
+			"Date:   %s\n", c.author.timestamp.Format("Mon Jan 2 15:04:05 2006 -0700"))
 		fmt.Printf("\n\t%s\n\n", c.message)
 
 		hash = c.parent

@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os/user"
-	"strconv"
 	"strings"
 	"time"
 )
@@ -33,8 +32,7 @@ type Object struct {
 type Commit struct {
 	tree    Hash
 	parent  Hash
-	author  string
-	date    time.Time
+	author  AuthorStamp
 	message string
 }
 
@@ -86,21 +84,19 @@ func commitObject(tree Object, parentHash Hash, message string) (Object, error) 
 	}
 	o.sha1 = timestampedHash(committer.Username)
 
-	commitDate := time.Now()
+	authorstamp := AuthorStamp{user: committer.Username, timestamp: time.Now()}
 
 	o.contents.WriteString(fmt.Sprintf("tree %s\n", tree.sha1))
 	if parentHash != INITIAL_COMMIT_HASH {
 		o.contents.WriteString(fmt.Sprintf("parent %s\n", parentHash))
 	}
-	o.contents.WriteString(fmt.Sprintf(
-		"author %s %d\n", committer.Username, commitDate.Unix()))
+	o.contents.WriteString(fmt.Sprintf("author %s\n", authorstamp.toString()))
 	o.contents.WriteString(fmt.Sprintf("\n%s\n", message))
 
 	return o, nil
 }
 
-func parseCommit(contents bytes.Buffer) (Commit, error) {
-	commit := Commit{}
+func parseCommit(contents bytes.Buffer) (commit Commit, err error) {
 	scanner := bufio.NewScanner(bytes.NewReader(contents.Bytes()))
 
 	for scanner.Scan() {
@@ -120,23 +116,18 @@ func parseCommit(contents bytes.Buffer) (Commit, error) {
 		var err error
 		if key == "tree" {
 			if commit.tree, err = ValidateHash(value); err != nil {
-				return Commit{}, err
+				return commit, err
 			}
 		} else if key == "author" {
-			authorAndDate := strings.SplitN(value, " ", 2)
-			commit.author = authorAndDate[0]
-			timestamp, err := strconv.ParseInt(authorAndDate[1], 10, 64)
-			if err != nil {
-				return Commit{}, fmt.Errorf(
-					"invalid commit timestamp: %q", authorAndDate[1])
+			if commit.author, err = parseAuthorStamp(value); err != nil {
+				return commit, err
 			}
-			commit.date = time.Unix(timestamp, 0)
 		} else if key == "parent" {
 			if commit.parent, err = ValidateHash(value); err != nil {
-				return Commit{}, err
+				return commit, err
 			}
 		} else {
-			return Commit{}, fmt.Errorf("unrecognized field in commit header: %q", key)
+			return commit, fmt.Errorf("unrecognized field in commit header: %q", key)
 		}
 	}
 

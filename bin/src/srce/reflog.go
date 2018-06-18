@@ -14,24 +14,29 @@ type RefLog struct {
 type RefLogEntry struct {
 	sha1Before Hash
 	sha1After  Hash
-	author     string
+	author     AuthorStamp
 	message    string
 }
 
-func parseRefLogEntry(line string) RefLogEntry {
+func parseRefLogEntry(line string) (rle RefLogEntry) {
 	pattern := regexp.MustCompile("([0-9a-f]{40}) ([0-9a-f]{40}) ([^\t]+)\t(.+)")
 	parts := pattern.FindStringSubmatch(line)
 	if len(parts) < 5 {
-		return RefLogEntry{}
+		return
+	}
+	author, err := parseAuthorStamp(parts[3])
+	if err != nil {
+		return
 	}
 	return RefLogEntry{
-		sha1Before: Hash(parts[1]), sha1After: Hash(parts[2]), author: parts[3],
+		sha1Before: Hash(parts[1]), sha1After: Hash(parts[2]), author: author,
 		message: parts[4]}
 }
 
 func (rle RefLogEntry) toString() string {
 	return fmt.Sprintf(
-		"%s %s %s\t%s\n", rle.sha1Before, rle.sha1After, rle.author, rle.message)
+		"%s %s %s\t%s\n", rle.sha1Before, rle.sha1After, rle.author.toString(),
+		rle.message)
 }
 
 func (r Repo) getRefLog(ref string) RefLog {
@@ -57,7 +62,7 @@ func (rl RefLog) read() (<-chan RefLogEntry, error) {
 	return ch, nil
 }
 
-func (rl RefLog) add(sha1Before, sha1After Hash, author, message string) error {
+func (rl RefLog) add(sha1Before, sha1After Hash, author AuthorStamp, message string) error {
 	entry := RefLogEntry{
 		sha1Before: sha1Before, sha1After: sha1After, author: author,
 		message: message}
