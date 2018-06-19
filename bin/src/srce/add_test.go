@@ -45,7 +45,7 @@ func TestAdd(t *testing.T) {
 		t.Errorf("Blob %s unreadable", hash)
 	} else if blob.Size() == 0 {
 		t.Errorf("Blob %s empty", hash)
-	} else if blob.Type() != "blob" {
+	} else if blob.Type() != BlobObject {
 		t.Errorf("Blob of wrong type (%s)", blob.Type())
 	} else if blob.Size() != len(blob.Contents()) {
 		t.Errorf(

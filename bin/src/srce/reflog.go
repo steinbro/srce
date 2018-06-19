@@ -19,7 +19,8 @@ type RefLogEntry struct {
 }
 
 func parseRefLogEntry(line string) (rle RefLogEntry) {
-	pattern := regexp.MustCompile("([0-9a-f]{40}) ([0-9a-f]{40}) ([^\t]+)\t(.+)")
+	pattern := regexp.MustCompile(
+		"^([0-9a-f]{40}) ([0-9a-f]{40}) ([^\t]+)\t(.+)$")
 	parts := pattern.FindStringSubmatch(line)
 	if len(parts) < 5 {
 		return

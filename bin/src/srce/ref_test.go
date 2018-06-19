@@ -9,8 +9,16 @@ func TestResolve(t *testing.T) {
 	hash, _ := repo.Resolve("HEAD")
 
 	// good cases
-	for _, input := range []string{"master", string(hash), string(hash[:4])} {
-		if result, _ := repo.Resolve(input); result != hash {
+	goodRefs := []string{
+		"master",
+		"refs/heads/master",
+		string(hash),
+		hash.abbreviated(),
+	}
+	for _, input := range goodRefs {
+		if result, err := repo.Resolve(input); err != nil {
+			t.Errorf("Unexpected error for ref %q: %q", input, err)
+		} else if result != hash {
 			t.Errorf("Resolve(%q) = %q (expecting %q)", input, result, hash)
 		}
 	}

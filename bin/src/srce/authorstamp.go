@@ -2,8 +2,8 @@ package srce
 
 import (
 	"fmt"
+	"regexp"
 	"strconv"
-	"strings"
 	"time"
 )
 
@@ -13,11 +13,16 @@ type AuthorStamp struct {
 }
 
 func parseAuthorStamp(input string) (a AuthorStamp, err error) {
-	userAndDate := strings.SplitN(input, " ", 2)
-	a.user = userAndDate[0]
-	timestamp, err := strconv.ParseInt(userAndDate[1], 10, 64)
+	pattern := regexp.MustCompile("^(.+) ([0-9]+)$")
+	userAndDate := pattern.FindStringSubmatch(input)
+	if len(userAndDate) < 3 {
+		err = fmt.Errorf("invalid author stamp: %q", input)
+		return
+	}
+	a.user = userAndDate[1]
+	timestamp, err := strconv.ParseInt(userAndDate[2], 10, 64)
 	if err != nil {
-		err = fmt.Errorf("invalid commit timestamp: %q", userAndDate[1])
+		err = fmt.Errorf("invalid commit timestamp: %q", userAndDate[2])
 		return
 	}
 	a.timestamp = time.Unix(timestamp, 0)

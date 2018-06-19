@@ -9,7 +9,7 @@ import (
 type Hash string
 
 func ValidateHash(input string) (Hash, error) {
-	f := regexp.MustCompile("[0-9a-f]{4,40}")
+	f := regexp.MustCompile("^[0-9a-f]{4,40}$")
 	if !f.MatchString(input) {
 		return Hash(""), fmt.Errorf("invalid hash: %q", input)
 	}

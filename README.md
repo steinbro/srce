@@ -22,15 +22,15 @@ M	LICENSE
 
 $ ./exe/srce commit "first commit"
 
-$ ./exe/srce rev-parse HEAD
-e160570596bcfc89bc296a0d4118bbe44637cabc
-
 $ ./exe/srce log
 commit e160570596bcfc89bc296a0d4118bbe44637cabc
 Author: steinbro
 Date:   Mon May 21 20:25:57 2018 -0400
 
 	first commit
+
+$ ./exe/srce rev-parse HEAD
+e160570596bcfc89bc296a0d4118bbe44637cabc
 
 $ ./exe/srce reflog
 e1605705 HEAD@{0}: commit: first commit

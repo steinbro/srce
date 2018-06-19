@@ -42,7 +42,7 @@ func (r Repo) GetSymbolicRef(name string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	pattern, _ := regexp.Compile("ref: (.+)\n")
+	pattern := regexp.MustCompile("ref: (.+)\n")
 	ref := pattern.FindSubmatch(data)
 	if len(ref) != 2 {
 		return "", fmt.Errorf("malformed ref: %q", data)
@@ -78,6 +78,10 @@ func (r Repo) Resolve(name string) (Hash, error) {
 
 	// is it a branch?
 	if refValue, err := ioutil.ReadFile(possibleRef); err == nil {
+		// case "master"
+		return ValidateHash(strings.TrimSpace(string(refValue)))
+	} else if refValue, err := ioutil.ReadFile(r.internalPath(name)); err == nil {
+		// case "refs/heads/master"
 		return ValidateHash(strings.TrimSpace(string(refValue)))
 	}
 
