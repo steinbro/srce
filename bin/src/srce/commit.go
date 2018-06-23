@@ -30,7 +30,7 @@ func (r Repo) Commit(message string) error {
 	parentHash, err := r.Resolve("HEAD")
 	if err != nil {
 		// no valid HEAD (is this the first commit?)
-		parentHash = INITIAL_COMMIT_HASH
+		parentHash = initialCommitHash
 	}
 
 	commitObj, err := commitObject(treeObj, parentHash, message)
@@ -55,7 +55,7 @@ func (r Repo) Commit(message string) error {
 
 	oldBranchHash, err := r.Resolve(branch)
 	if err != nil {
-		oldBranchHash = INITIAL_COMMIT_HASH
+		oldBranchHash = initialCommitHash
 	}
 	branchRefLog := r.getRefLog(branch)
 	branchRefLog.add(oldBranchHash, commitObj.sha1, c.author, refMessage)

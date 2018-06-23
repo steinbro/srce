@@ -64,28 +64,34 @@ func (rl RefLog) read() (<-chan RefLogEntry, error) {
 }
 
 func (rl RefLog) add(sha1Before, sha1After Hash, author AuthorStamp, message string) error {
-	entry := RefLogEntry{
-		sha1Before: sha1Before, sha1After: sha1After, author: author,
-		message: message}
 	refLogFile, err := os.OpenFile(
 		rl.path, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		return err
 	}
+	defer refLogFile.Close()
+
+	entry := RefLogEntry{
+		sha1Before: sha1Before, sha1After: sha1After, author: author,
+		message: message}
 	if _, err := refLogFile.WriteString(entry.toString()); err != nil {
 		return err
 	}
-	refLogFile.Close()
 	return nil
 }
 
-func (r Repo) RefLog(ref string) error {
+func (r Repo) RefLog(input string) error {
 	if !r.IsInitialized() {
 		return fmt.Errorf("not a srce project")
 	}
 
-	rl := r.getRefLog(ref)
-	entries, err := rl.read()
+	// validate/normalize input (e.g. master -> refs/heads/master)
+	ref, err := r.expandRef(input)
+	if err != nil {
+		return err
+	}
+
+	entries, err := r.getRefLog(ref).read()
 	if err != nil {
 		return err
 	}

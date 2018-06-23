@@ -60,33 +60,52 @@ func (r Repo) SetSymbolicRef(name, ref string) error {
 		[]byte(fmt.Sprintf("ref: %s\n", ref)), 0644)
 }
 
+// expandRef resolvews a user-specified ref into a fully-qualified branch name,
+// e.g. "master" becomes "refs/heads/master" (if it exists).
+func (r Repo) expandRef(input string) (string, error) {
+	expandedInput := filepath.Join("refs", "heads", input)
+	// prevent relative paths, e.g. "../../HEAD"
+	if !strings.HasSuffix(expandedInput, input) {
+		return "", fmt.Errorf("bad ref: %s", input)
+	}
+
+	if _, err := os.Stat(r.internalPath(expandedInput)); err == nil {
+		// input was e.g. "master"
+		return expandedInput, nil
+	} else if _, err := os.Stat(r.internalPath(input)); err == nil {
+		// input was e.g. "refs/heads/master"
+		return input, nil
+	}
+
+	return "", fmt.Errorf("unrecognized ref: %s", input)
+}
+
 func (r Repo) Resolve(name string) (Hash, error) {
 	if !r.IsInitialized() {
 		return Hash(""), fmt.Errorf("not a srce project")
 	}
 
-	// is it a branch, or a special name referring to a branch?
-	possibleRef := r.internalPath("refs", "heads", name)
-	// prevent relative paths, e.g. "../../HEAD"
-	if !strings.HasSuffix(possibleRef, name) {
-		return Hash(""), fmt.Errorf("bad ref: %s", name)
-	}
-	if ref, err := r.GetSymbolicRef(name); err == nil {
-		// already includes the refs/heads part
-		possibleRef = r.internalPath(ref)
+	transformedInput := name
+	// is it a special name referring to a branch? (e.g. "HEAD")
+	if ref, err := r.GetSymbolicRef(transformedInput); err == nil {
+		// HEAD -> refs/heads/master
+		transformedInput = ref
 	}
 
 	// is it a branch?
-	if refValue, err := ioutil.ReadFile(possibleRef); err == nil {
-		// case "master"
-		return ValidateHash(strings.TrimSpace(string(refValue)))
-	} else if refValue, err := ioutil.ReadFile(r.internalPath(name)); err == nil {
-		// case "refs/heads/master"
-		return ValidateHash(strings.TrimSpace(string(refValue)))
+	// master -> refs/heads/master
+	if ref, err := r.expandRef(transformedInput); err == nil {
+		if hash, err := ioutil.ReadFile(r.internalPath(ref)); err == nil {
+			// refs/heads/master -> d41d09fa...
+			transformedInput = strings.TrimSpace(string(hash))
+		} else {
+			return Hash(""), err
+		}
 	}
 
 	// finally, is it an object hash, or unambiguous prefix?
-	if hash, err := ValidateHash(name); err == nil {
+	if hash, err := ValidateHash(transformedInput); err == nil {
+		// d41d -> d41d09fa...
 		return r.ExpandPartialHash(hash)
 	} else {
 		return Hash(""), err

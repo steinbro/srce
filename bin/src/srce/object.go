@@ -12,7 +12,7 @@ import (
 	"time"
 )
 
-const INITIAL_COMMIT_HASH = Hash("0000000000000000000000000000000000000000")
+const initialCommitHash = Hash("0000000000000000000000000000000000000000")
 
 type ObjectType string
 
@@ -87,7 +87,7 @@ func commitObject(tree Object, parentHash Hash, message string) (Object, error) 
 	authorstamp := AuthorStamp{user: committer.Username, timestamp: time.Now()}
 
 	o.contents.WriteString(fmt.Sprintf("tree %s\n", tree.sha1))
-	if parentHash != INITIAL_COMMIT_HASH {
+	if parentHash != initialCommitHash {
 		o.contents.WriteString(fmt.Sprintf("parent %s\n", parentHash))
 	}
 	o.contents.WriteString(fmt.Sprintf("author %s\n", authorstamp.toString()))
@@ -113,7 +113,6 @@ func parseCommit(contents bytes.Buffer) (commit Commit, err error) {
 		parts := strings.SplitN(line, " ", 2)
 		key, value := parts[0], parts[1]
 
-		var err error
 		if key == "tree" {
 			if commit.tree, err = ValidateHash(value); err != nil {
 				return commit, err

@@ -54,15 +54,16 @@ func (i Index) read() (<-chan IndexEntry, error) {
 }
 
 func (i Index) add(sha1 Hash, itype ObjectType, path string) error {
-	entry := IndexEntry{sha1: sha1, itype: itype, path: path}
 	indexFile, err := os.OpenFile(i.path, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		return err
 	}
+	defer indexFile.Close()
+
+	entry := IndexEntry{sha1: sha1, itype: itype, path: path}
 	if _, err := indexFile.WriteString(entry.toString()); err != nil {
 		return err
 	}
-	indexFile.Close()
 	return nil
 }
 

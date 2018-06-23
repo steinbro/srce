@@ -14,6 +14,7 @@ var authorStampTests = map[string]AuthorStamp{
 
 var badAuthorStamps = []string{
 	"no date",
+	"really long date 999999999999999999999999",
 	"steinbro 1 extra",
 }
 
