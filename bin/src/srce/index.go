@@ -53,18 +53,16 @@ func (i Index) read() (<-chan IndexEntry, error) {
 	return ch, nil
 }
 
-func (i Index) add(sha1 Hash, itype ObjectType, path string) error {
+func (i Index) add(sha1 Hash, itype ObjectType, path string) (err error) {
 	indexFile, err := os.OpenFile(i.path, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
-		return err
+		return
 	}
 	defer indexFile.Close()
 
 	entry := IndexEntry{sha1: sha1, itype: itype, path: path}
-	if _, err := indexFile.WriteString(entry.toString()); err != nil {
-		return err
-	}
-	return nil
+	_, err = indexFile.WriteString(entry.toString())
+	return
 }
 
 func (i Index) clear() error {
@@ -72,8 +70,9 @@ func (i Index) clear() error {
 	if err != nil {
 		return err
 	}
+	defer indexFile.Close()
+
 	indexFile.Truncate(0)
-	indexFile.Close()
 	return nil
 }
 
@@ -82,8 +81,7 @@ func (r Repo) Status() error {
 		return fmt.Errorf("not a srce project")
 	}
 
-	index := r.getIndex()
-	entries, err := index.read()
+	entries, err := r.getIndex().read()
 	if err != nil {
 		return err
 	}

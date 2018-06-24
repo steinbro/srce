@@ -6,7 +6,10 @@ func TestResolve(t *testing.T) {
 	repo := setUp(t)
 	repo.Add(repo.internalPath("HEAD"))
 	repo.Commit("test commit")
-	hash, _ := repo.Resolve("HEAD")
+	hash, err := repo.Resolve("HEAD")
+	if err != nil {
+		t.Error(err)
+	}
 
 	// good cases
 	goodRefs := []string{

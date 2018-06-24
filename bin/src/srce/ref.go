@@ -14,22 +14,33 @@ func (r Repo) internalPath(parts ...string) string {
 	return filepath.Join(things...)
 }
 
-func (r Repo) UpdateRef(ref string, hash Hash) error {
+func (r Repo) UpdateRef(inputRef, inputHash string) error {
 	if !r.IsInitialized() {
 		return fmt.Errorf("not a srce project")
 	}
 
-	// write hash to e.g. .srce/refs/heads/master
+	// validate user-specified ref
+	ref, err := r.expandRef(inputRef)
+	if err != nil {
+		return err
+	}
+
+	// validate user-specified hash
+	hash, err := r.Resolve(inputHash)
+	if err != nil {
+		return err
+	}
+
+	// write hash to e.g. refs/heads/master
 	refFile, err := os.OpenFile(
 		r.internalPath(ref), os.O_TRUNC|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		return err
 	}
-	if _, err := refFile.WriteString(fmt.Sprintf("%s\n", hash)); err != nil {
-		return err
-	}
-	refFile.Close()
-	return nil
+	defer refFile.Close()
+
+	_, err = refFile.WriteString(fmt.Sprintf("%s\n", hash))
+	return err
 }
 
 func (r Repo) GetSymbolicRef(name string) (string, error) {
@@ -78,6 +89,12 @@ func (r Repo) expandRef(input string) (string, error) {
 	}
 
 	return "", fmt.Errorf("unrecognized ref: %s", input)
+}
+
+func (r Repo) createRef(name string) (err error) {
+	_, err = os.OpenFile(
+		r.internalPath(name), os.O_TRUNC|os.O_CREATE|os.O_WRONLY, 0644)
+	return
 }
 
 func (r Repo) Resolve(name string) (Hash, error) {

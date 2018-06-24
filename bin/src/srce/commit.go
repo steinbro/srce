@@ -37,14 +37,24 @@ func (r Repo) Commit(message string) error {
 	if err != nil {
 		return err
 	}
-	r.Store(commitObj)
+	if err := r.Store(commitObj); err != nil {
+		return err
+	}
 
 	// Update .srce/refs/heads/master to point to commit object
 	branch, err := r.GetSymbolicRef("HEAD")
 	if err != nil {
 		return err
 	}
-	r.UpdateRef(branch, commitObj.sha1)
+	// create refs/heads/<branch> if it doesn't yet exist
+	if _, err := r.expandRef(branch); err != nil {
+		if err := r.createRef(branch); err != nil {
+			return err
+		}
+	}
+	if err := r.UpdateRef(branch, string(commitObj.sha1)); err != nil {
+		return err
+	}
 
 	// update reflog (for both HEAD and branch)
 	refMessage := fmt.Sprintf("commit: %s", message)
