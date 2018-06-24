@@ -11,19 +11,10 @@ func main() {
 		log.Fatal("usage: update-ref <ref> <hash>")
 	}
 	ref := os.Args[1]
-	hash, err := srce.ValidateHash(os.Args[2])
-	if err != nil {
-		log.Fatal(err)
-	}
+	hash := os.Args[2]
 
 	repo := srce.Repo{Dir: srce.DotDir}
-
-	fullHash, err := repo.ExpandPartialHash(hash)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	if err := repo.UpdateRef(ref, fullHash); err != nil {
+	if err := repo.UpdateRef(ref, hash); err != nil {
 		log.Fatal(err)
 	}
 }

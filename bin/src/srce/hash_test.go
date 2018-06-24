@@ -28,6 +28,7 @@ func TestValidateHash(t *testing.T) {
 
 func TestExpandPartialHash(t *testing.T) {
 	repo := setUp(t)
+	defer tearDown(t)
 
 	input := Hash("deadbeef")
 	if result, err := repo.ExpandPartialHash(input); err == nil {
@@ -48,6 +49,4 @@ func TestExpandPartialHash(t *testing.T) {
 	if result, err := repo.ExpandPartialHash(input); err == nil {
 		t.Errorf("Ambiguous hash expansion succeeded: %q -> %q", input, result)
 	}
-
-	tearDown(t)
 }

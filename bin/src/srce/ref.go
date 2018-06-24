@@ -97,12 +97,12 @@ func (r Repo) createRef(name string) (err error) {
 	return
 }
 
-func (r Repo) Resolve(name string) (Hash, error) {
+func (r Repo) Resolve(input string) (Hash, error) {
 	if !r.IsInitialized() {
 		return Hash(""), fmt.Errorf("not a srce project")
 	}
 
-	transformedInput := name
+	transformedInput := input
 	// is it a special name referring to a branch? (e.g. "HEAD")
 	if ref, err := r.GetSymbolicRef(transformedInput); err == nil {
 		// HEAD -> refs/heads/master
@@ -124,7 +124,7 @@ func (r Repo) Resolve(name string) (Hash, error) {
 	if hash, err := ValidateHash(transformedInput); err == nil {
 		// d41d -> d41d09fa...
 		return r.ExpandPartialHash(hash)
-	} else {
-		return Hash(""), err
 	}
+
+	return Hash(""), fmt.Errorf("unrecognized ref: %q", input)
 }

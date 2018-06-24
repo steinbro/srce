@@ -17,11 +17,12 @@ var badHeaderTests = []string{
 
 func TestParseObject(t *testing.T) {
 	repo := setUp(t)
+	defer tearDown(t)
+
 	for _, tt := range badHeaderTests {
 		buf := bytes.NewBufferString(tt)
 		if _, err := repo.parseObject(buf); err == nil {
 			t.Errorf("%q did not raise an error", tt)
 		}
 	}
-	tearDown(t)
 }

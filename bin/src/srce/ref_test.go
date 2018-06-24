@@ -4,6 +4,8 @@ import "testing"
 
 func TestResolve(t *testing.T) {
 	repo := setUp(t)
+	defer tearDown(t)
+
 	repo.Add(repo.internalPath("HEAD"))
 	repo.Commit("test commit")
 	hash, err := repo.Resolve("HEAD")
@@ -39,6 +41,4 @@ func TestResolve(t *testing.T) {
 			t.Errorf("Resolve(%q) = %q (expecting error)", input, result)
 		}
 	}
-
-	tearDown(t)
 }

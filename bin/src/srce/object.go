@@ -82,7 +82,6 @@ func commitObject(tree Object, parentHash Hash, message string) (Object, error) 
 	if err != nil {
 		return o, err
 	}
-	o.sha1 = timestampedHash(committer.Username)
 
 	authorstamp := AuthorStamp{user: committer.Username, timestamp: time.Now()}
 
@@ -92,6 +91,11 @@ func commitObject(tree Object, parentHash Hash, message string) (Object, error) 
 	}
 	o.contents.WriteString(fmt.Sprintf("author %s\n", authorstamp.toString()))
 	o.contents.WriteString(fmt.Sprintf("\n%s\n", message))
+
+	// Compute SHA1 hash of commit contents
+	sha := sha1.New()
+	sha.Write(o.contents.Bytes())
+	o.sha1 = Hash(hex.EncodeToString(sha.Sum(nil)))
 
 	return o, nil
 }
@@ -111,6 +115,9 @@ func parseCommit(contents bytes.Buffer) (commit Commit, err error) {
 		}
 
 		parts := strings.SplitN(line, " ", 2)
+		if len(parts) != 2 {
+			return commit, fmt.Errorf("malformed commit data: %q", line)
+		}
 		key, value := parts[0], parts[1]
 
 		if key == "tree" {

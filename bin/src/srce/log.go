@@ -20,7 +20,7 @@ func (r Repo) Log() error {
 			return err
 		}
 
-		c, _ := parseCommit(o.contents)
+		c, err := parseCommit(o.contents)
 		if err != nil {
 			return err
 		}

@@ -60,6 +60,7 @@ func (r Repo) getLastCommit(t *testing.T) (Hash, Commit) {
 
 func TestCommit(t *testing.T) {
 	repo := setUp(t)
+	defer tearDown(t)
 
 	repo.commitSomething(t)
 
@@ -69,20 +70,20 @@ func TestCommit(t *testing.T) {
 
 	_, commit := repo.getLastCommit(t)
 	repo.checkTree(t, commit.tree)
-
-	tearDown(t)
 }
 
 func TestCommitEmpty(t *testing.T) {
 	repo := setUp(t)
+	defer tearDown(t)
+
 	if err := repo.Commit("test commit"); err == nil {
 		t.Error("empty commit succeeded")
 	}
-	tearDown(t)
 }
 
 func TestCommitParent(t *testing.T) {
 	repo := setUp(t)
+	defer tearDown(t)
 
 	repo.commitSomething(t)
 	hash1, commit1 := repo.getLastCommit(t)
@@ -98,6 +99,4 @@ func TestCommitParent(t *testing.T) {
 	if commit2.message != "test commit" {
 		t.Errorf("unexpected commit message (%q)", commit2.message)
 	}
-
-	tearDown(t)
 }

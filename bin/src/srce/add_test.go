@@ -27,6 +27,8 @@ func tearDown(t *testing.T) {
 
 func TestAdd(t *testing.T) {
 	repo := setUp(t)
+	defer tearDown(t)
+
 	// Check no errors are raised
 	testFile := repo.internalPath("HEAD")
 	if err := repo.Add(testFile); err != nil {
@@ -51,23 +53,14 @@ func TestAdd(t *testing.T) {
 		t.Errorf(
 			"Blob header/size mismatch (%d != %d)", blob.Size(), len(blob.Contents()))
 	}
-	tearDown(t)
 }
 
 func TestAddNonexistent(t *testing.T) {
 	repo := setUp(t)
+	defer tearDown(t)
+
 	if err := repo.Add("nonexistent"); err == nil {
 		t.Error("Add nonexistent file succeeded")
-	} else {
-		t.Log(err)
-	}
-	tearDown(t)
-}
-
-func TestAddOutside(t *testing.T) {
-	repo := Repo{Dir: testFolder}
-	if err := repo.Add("nonexistent"); err == nil {
-		t.Fatal("Add to non-project succeeded")
 	} else {
 		t.Log(err)
 	}
@@ -75,21 +68,25 @@ func TestAddOutside(t *testing.T) {
 
 func TestAddUnwritable(t *testing.T) {
 	repo := setUp(t)
-	// Make project folder read-only
-	if err := os.Chmod(repo.Dir, 0500); err != nil {
-		t.Fatal(err)
-	}
+	defer tearDown(t)
 
-	testFile := repo.internalPath("HEAD")
-	if err := repo.Add(testFile); err == nil {
-		t.Fatal("Add to non-writable project succeeded")
-	} else {
-		t.Log(err)
-	}
+	// Test both failure to write index, and write object
+	for _, unwritableDir := range []string{repo.Dir, repo.internalPath("objects")} {
+		// Make folder read-only
+		if err := os.Chmod(unwritableDir, 0500); err != nil {
+			t.Fatal(err)
+		}
 
-	// Restore writability
-	if err := os.Chmod(repo.Dir, 0700); err != nil {
-		t.Fatal(err)
+		testFile := repo.internalPath("HEAD")
+		if err := repo.Add(testFile); err == nil {
+			t.Errorf("Add to non-writable %q succeeded", unwritableDir)
+		} else {
+			t.Log(err)
+		}
+
+		// Restore writability, and recreate repo
+		os.Chmod(unwritableDir, 0700)
+		tearDown(t)
+		repo = setUp(t)
 	}
-	tearDown(t)
 }

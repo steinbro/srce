@@ -8,8 +8,8 @@ import (
 const testFolder = ".srce-test"
 
 func TestInit(t *testing.T) {
-	// Remove any stale test directories
-	os.RemoveAll(testFolder)
+	// When finished, remove temporary test directory
+	defer os.RemoveAll(testFolder)
 
 	// Check no errors are raised
 	repo := Repo{Dir: testFolder}
@@ -21,21 +21,42 @@ func TestInit(t *testing.T) {
 	if _, err := repo.GetSymbolicRef("HEAD"); os.IsNotExist(err) {
 		t.Error("HEAD doesn't exist after Init")
 	}
-
-	// Remove temporary test directory
-	os.RemoveAll(testFolder)
 }
 
 func TestInitBad(t *testing.T) {
 	// Create temporary test "directory"
 	os.OpenFile(testFolder, os.O_RDONLY|os.O_CREATE, 0666)
+	// When finished, remove temporary test "directory"
+	defer os.Remove(testFolder)
 
 	// Check that an error is raised
 	repo := Repo{Dir: testFolder}
 	if err := repo.Init(); err == nil {
 		t.Errorf("Init succeeded when %s already exists", testFolder)
 	}
+}
 
-	// Remove temporary test "directory"
-	os.Remove(testFolder)
+// Commands besides srce-init generally shoud raise an error when executed
+// outside of a repo
+func TestCommandsOutside(t *testing.T) {
+	repo := Repo{Dir: testFolder}
+	cmds := [](func() error){
+		func() error { return repo.Add("HEAD") },
+		func() error { return repo.Commit("whatever") },
+		repo.Log,
+		func() error { return repo.RefLog("HEAD") },
+		func() error { _, err := repo.Resolve("HEAD"); return err },
+		repo.Status,
+		func() error { _, err := repo.GetSymbolicRef("HEAD"); return err },
+		func() error { return repo.SetSymbolicRef("HEAD", "whatever") },
+		func() error { return repo.UpdateRef("master", "whatever") },
+	}
+	expected := "not a srce project"
+	for _, cmd := range cmds {
+		if err := cmd(); err == nil {
+			t.Errorf("%s in non-project succeeded", cmd)
+		} else if err.Error() != expected {
+			t.Errorf("got error %q (expecting %q)", err, expected)
+		}
+	}
 }
