@@ -18,20 +18,25 @@ type RefLogEntry struct {
 	message    string
 }
 
-func parseRefLogEntry(line string) (rle RefLogEntry) {
+type RefLogEntryOrError struct {
+	RefLogEntry
+	Err error
+}
+
+func parseRefLogEntry(line string) (rle RefLogEntry, err error) {
 	pattern := regexp.MustCompile(
 		"^([0-9a-f]{40}) ([0-9a-f]{40}) ([^\t]+)\t(.+)$")
 	parts := pattern.FindStringSubmatch(line)
 	if len(parts) < 5 {
-		return
+		return rle, fmt.Errorf("malformed reflog entry: %q", line)
 	}
 	author, err := parseAuthorStamp(parts[3])
 	if err != nil {
-		return
+		return rle, fmt.Errorf("malformed author/timestamp in reflog: %q", parts[3])
 	}
 	return RefLogEntry{
 		sha1Before: Hash(parts[1]), sha1After: Hash(parts[2]), author: author,
-		message: parts[4]}
+		message: parts[4]}, nil
 }
 
 func (rle RefLogEntry) toString() string {
@@ -44,18 +49,23 @@ func (r Repo) getRefLog(ref string) RefLog {
 	return RefLog{path: r.internalPath(fmt.Sprintf("logs/%s", ref))}
 }
 
-func (rl RefLog) read() (<-chan RefLogEntry, error) {
+func (rl RefLog) read() (<-chan RefLogEntryOrError, error) {
 	refLogFile, err := os.Open(rl.path)
 	if err != nil {
 		return nil, err
 	}
 
 	// Return an iterator of RefLogEntries
-	ch := make(chan RefLogEntry)
+	ch := make(chan RefLogEntryOrError)
 	go func() {
 		scanner := bufio.NewScanner(refLogFile)
 		for scanner.Scan() {
-			ch <- parseRefLogEntry(scanner.Text())
+			rle, err := parseRefLogEntry(scanner.Text())
+			if err != nil {
+				ch <- RefLogEntryOrError{Err: err}
+				return
+			}
+			ch <- RefLogEntryOrError{RefLogEntry: rle}
 		}
 		close(ch)
 		refLogFile.Close()
@@ -98,8 +108,12 @@ func (r Repo) RefLog(input string) error {
 
 	i := 0
 	for rle := range entries {
+		if rle.Err != nil {
+			return rle.Err
+		}
 		fmt.Printf(
-			"%s %s@{%d}: %s\n", rle.sha1After.abbreviated(), ref, i, rle.message)
+			"%s %s@{%d}: %s\n", rle.RefLogEntry.sha1After.abbreviated(), ref, i,
+			rle.RefLogEntry.message)
 		i++
 	}
 

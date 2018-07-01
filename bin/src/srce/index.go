@@ -17,13 +17,18 @@ type IndexEntry struct {
 	path  string
 }
 
-func parseIndexEntry(line string) IndexEntry {
+type IndexEntryOrError struct {
+	IndexEntry
+	Err error
+}
+
+func parseIndexEntry(line string) (ie IndexEntry, err error) {
 	parts := strings.Split(line, " ")
 	if len(parts) != 3 {
-		return IndexEntry{}
+		return ie, fmt.Errorf("malformed index entry: %q", line)
 	}
 	return IndexEntry{
-		sha1: Hash(parts[0]), itype: ObjectType(parts[1]), path: parts[2]}
+		sha1: Hash(parts[0]), itype: ObjectType(parts[1]), path: parts[2]}, nil
 }
 
 func (i IndexEntry) toString() string {
@@ -34,18 +39,23 @@ func (r Repo) getIndex() Index {
 	return Index{path: r.internalPath("index")}
 }
 
-func (i Index) read() (<-chan IndexEntry, error) {
+func (i Index) read() (<-chan IndexEntryOrError, error) {
 	indexFile, err := os.Open(i.path)
 	if err != nil {
 		return nil, err
 	}
 
 	// Return an iterator of IndexEntries
-	ch := make(chan IndexEntry)
+	ch := make(chan IndexEntryOrError)
 	go func() {
 		scanner := bufio.NewScanner(indexFile)
 		for scanner.Scan() {
-			ch <- parseIndexEntry(scanner.Text())
+			ie, err := parseIndexEntry(scanner.Text())
+			if err != nil {
+				ch <- IndexEntryOrError{Err: err}
+				return
+			}
+			ch <- IndexEntryOrError{IndexEntry: ie}
 		}
 		close(ch)
 		indexFile.Close()
@@ -82,12 +92,17 @@ func (r Repo) Status() error {
 	}
 
 	entries, err := r.getIndex().read()
-	if err != nil {
+	if os.IsNotExist(err) {
+		return nil  // missing index, equivalent to empty index
+	} else if err != nil {
 		return err
 	}
 
 	for e := range entries {
-		fmt.Printf("M\t%s\n", e.path)
+		if e.Err != nil {
+			return e.Err
+		}
+		fmt.Printf("M\t%s\n", e.IndexEntry.path)
 	}
 
 	return nil

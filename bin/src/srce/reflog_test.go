@@ -20,18 +20,16 @@ var badRefLogs = []string{
 }
 
 func TestParseRefLogEntry(t *testing.T) {
-	emptyRefLog := RefLogEntry{}
-
 	for input, output := range goodRefLogs {
-		if result := parseRefLogEntry(input); result == emptyRefLog {
-			t.Errorf("parseRefLogEntry(%q) failed to parse", input)
+		if result, err := parseRefLogEntry(input); err != nil {
+			t.Errorf("parseRefLogEntry(%q) failed: %q", input, err)
 		} else if result != output {
 			t.Errorf("parseRefLogEntry(%q) = %s (expecting %s)", input, result, output)
 		}
 	}
 
 	for _, input := range badRefLogs {
-		if result := parseRefLogEntry(input); result != emptyRefLog {
+		if result, err := parseRefLogEntry(input); err == nil {
 			t.Errorf("parseRefLogEntry(%q) = %q (expected error)", input, result)
 		}
 	}
@@ -94,13 +92,31 @@ func TestRefLogCommand(t *testing.T) {
 	}
 }
 
-func TestMissingRefLog(t *testing.T) {
+func TestMalformedMissingRefLog(t *testing.T) {
 	repo := setUp(t)
 	defer tearDown(t)
 
 	repo.commitSomething(t)
-	os.Remove(repo.internalPath("logs", "refs", "heads", "master"))
 
+	// append junk to reflog
+	refLogFile, err := os.OpenFile(
+		repo.internalPath("logs", "refs", "heads", "master"),
+		os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := refLogFile.WriteString("invalid\n"); err != nil {
+		t.Fatal(err)
+	}
+	refLogFile.Close()
+	if err := repo.RefLog("master"); err == nil {
+		t.Error("RefLog with malformed reflog succeeded")
+	} else {
+		t.Log(err)
+	}
+
+	// destroy reflog entirely
+	os.Remove(repo.internalPath("logs", "refs", "heads", "master"))
 	if err := repo.RefLog("master"); err == nil {
 		t.Error("RefLog with missing reflog succeeded")
 	} else {
