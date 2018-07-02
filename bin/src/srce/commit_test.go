@@ -2,6 +2,8 @@ package srce
 
 import (
 	"bufio"
+	"bytes"
+	"os"
 	"strings"
 	"testing"
 )
@@ -98,5 +100,47 @@ func TestCommitParent(t *testing.T) {
 	}
 	if commit2.message != "test commit" {
 		t.Errorf("unexpected commit message (%q)", commit2.message)
+	}
+}
+
+func TestCommitMalformed(t *testing.T) {
+	testCases := []string{
+		"tree notahash\n",
+		"author notanauthorstamp\n",
+		"parent notahash\n",
+		"non sense\n",
+	}
+
+	for _, b := range testCases {
+		var buf bytes.Buffer
+		buf.WriteString(b)
+		if _, err := parseCommit(buf); err == nil {
+			t.Errorf("parseCommit(%q) succeeded (expected error)", b)
+		}
+	}
+}
+
+func TestCommitUnwritableIndex(t *testing.T) {
+	repo := setUp(t)
+	defer tearDown(t)
+
+	// Add a file to the index
+	testFile := repo.internalPath("HEAD")
+	if err := repo.Add(testFile); err != nil {
+		t.Error(err)
+	}
+
+	// Make index read-only
+	if err := os.Chmod(repo.getIndex().path, 0500); err != nil {
+		t.Fatal(err)
+	}
+	// Restore writability when finished
+	defer os.Chmod(repo.getIndex().path, 0700)
+
+	// Should fail when attempting to clear the index
+	if err := repo.Commit("test"); err == nil {
+		t.Errorf("Commit with non-writable index succeeded")
+	} else {
+		t.Log(err)
 	}
 }

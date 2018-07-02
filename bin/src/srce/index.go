@@ -93,7 +93,7 @@ func (r Repo) Status() error {
 
 	entries, err := r.getIndex().read()
 	if os.IsNotExist(err) {
-		return nil  // missing index, equivalent to empty index
+		return nil // missing index, equivalent to empty index
 	} else if err != nil {
 		return err
 	}
