@@ -23,13 +23,13 @@ func TestAuthorStamp(t *testing.T) {
 		if result, err := parseAuthorStamp(input); err != nil {
 			t.Errorf("parseAuthorStamp(%q) error: %q", input, err)
 		} else if result != output {
-			t.Errorf("parseAuthorStamp(%q) = %s (expecting %s)", input, result, output)
+			t.Errorf("parseAuthorStamp(%q) = %v (expecting %v)", input, result, output)
 		}
 	}
 
 	for _, input := range badAuthorStamps {
 		if result, err := parseAuthorStamp(input); err == nil {
-			t.Errorf("parseAuthorStamp(%q) = %q (expected error)", input, result)
+			t.Errorf("parseAuthorStamp(%q) = %v (expected error)", input, result)
 		}
 	}
 }

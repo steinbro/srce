@@ -40,23 +40,33 @@ func TestInitBad(t *testing.T) {
 // outside of a repo
 func TestCommandsOutside(t *testing.T) {
 	repo := Repo{Dir: testFolder}
-	cmds := [](func() error){
-		func() error { return repo.Add("HEAD") },
-		func() error { return repo.Commit("whatever") },
-		repo.Log,
-		func() error { return repo.RefLog("HEAD") },
-		func() error { _, err := repo.Resolve("HEAD"); return err },
-		repo.Status,
-		func() error { _, err := repo.GetSymbolicRef("HEAD"); return err },
-		func() error { return repo.SetSymbolicRef("HEAD", "whatever") },
-		func() error { return repo.UpdateRef("master", "whatever") },
+	cmds := map[string](func() error){
+		"Add":    func() error { return repo.Add("HEAD") },
+		"Commit": func() error { return repo.Commit("whatever") },
+		"Log":    repo.Log,
+		"RefLog": func() error { return repo.RefLog("HEAD") },
+		"Resolve": func() error {
+			_, err := repo.Resolve("HEAD")
+			return err
+		},
+		"Status": repo.Status,
+		"GetSymbolicRef": func() error {
+			_, err := repo.GetSymbolicRef("HEAD")
+			return err
+		},
+		"SetSymbolicRef": func() error {
+			return repo.SetSymbolicRef("HEAD", "whatever")
+		},
+		"UpdateRef": func() error {
+			return repo.UpdateRef("master", "whatever")
+		},
 	}
 	expected := "not a srce project"
-	for _, cmd := range cmds {
+	for name, cmd := range cmds {
 		if err := cmd(); err == nil {
-			t.Errorf("%s in non-project succeeded", cmd)
+			t.Errorf("%s in non-project succeeded", name)
 		} else if err.Error() != expected {
-			t.Errorf("got error %q (expecting %q)", err, expected)
+			t.Errorf("%s got error %q (expecting %q)", name, err, expected)
 		}
 	}
 }

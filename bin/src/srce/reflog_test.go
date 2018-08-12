@@ -24,13 +24,13 @@ func TestParseRefLogEntry(t *testing.T) {
 		if result, err := parseRefLogEntry(input); err != nil {
 			t.Errorf("parseRefLogEntry(%q) failed: %q", input, err)
 		} else if result != output {
-			t.Errorf("parseRefLogEntry(%q) = %s (expecting %s)", input, result, output)
+			t.Errorf("parseRefLogEntry(%q) = %v (expecting %v)", input, result, output)
 		}
 	}
 
 	for _, input := range badRefLogs {
 		if result, err := parseRefLogEntry(input); err == nil {
-			t.Errorf("parseRefLogEntry(%q) = %q (expected error)", input, result)
+			t.Errorf("parseRefLogEntry(%q) = %v (expected error)", input, result)
 		}
 	}
 }
