@@ -111,15 +111,11 @@ func TestMalformedMissingRefLog(t *testing.T) {
 	refLogFile.Close()
 	if err := repo.RefLog("master"); err == nil {
 		t.Error("RefLog with malformed reflog succeeded")
-	} else {
-		t.Log(err)
 	}
 
 	// destroy reflog entirely
 	os.Remove(repo.internalPath("logs", "refs", "heads", "master"))
 	if err := repo.RefLog("master"); err == nil {
 		t.Error("RefLog with missing reflog succeeded")
-	} else {
-		t.Log(err)
 	}
 }

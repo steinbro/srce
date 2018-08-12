@@ -61,8 +61,6 @@ func TestAddNonexistent(t *testing.T) {
 
 	if err := repo.Add("nonexistent"); err == nil {
 		t.Error("Add nonexistent file succeeded")
-	} else {
-		t.Log(err)
 	}
 }
 
@@ -80,8 +78,6 @@ func TestAddUnwritable(t *testing.T) {
 		testFile := repo.internalPath("HEAD")
 		if err := repo.Add(testFile); err == nil {
 			t.Errorf("Add to non-writable %q succeeded", unwritableDir)
-		} else {
-			t.Log(err)
 		}
 
 		// Restore writability, and recreate repo

@@ -39,7 +39,5 @@ func TestStatus(t *testing.T) {
 
 	if err := repo.Status(); err == nil {
 		t.Error("Index with malformed entry succeeded")
-	} else {
-		t.Log(err)
 	}
 }
