@@ -80,3 +80,44 @@ func TestTreeHash(t *testing.T) {
 		t.Errorf("%s should not be %s", actual, desired_hash)
 	}
 }
+
+func TestTreeGet(t *testing.T) {
+	desired_hash := Hash("deadbeef")
+	tree := makeTree()
+	tree.add("foo/bar", desired_hash)
+
+	if hash, err := tree.get("foo/bar"); err != nil {
+		t.Error(err)
+	} else if hash != desired_hash {
+		t.Errorf("tree.get(foo/bar) = %s (expected %s)", hash, desired_hash)
+	}
+
+	if _, err := tree.get("foo/nonexistent"); err == nil {
+		t.Error("tree.get(foo/nonexistent) succeeded")
+	}
+}
+
+func TestLoadTreeBad(t *testing.T) {
+	repo := setUp(t)
+	defer tearDown(t)
+
+	tree := makeTree()
+	if repo.loadTree(tree, "bad", "") == nil {
+		t.Error("loaded tree from bad hash")
+	}
+
+	repo.commitSomething(t)
+	hash, _ := repo.getLastCommit(t)
+	if repo.loadTree(tree, hash, "") == nil {
+		t.Error("loaded tree from hash of non-tree")
+	}
+
+	badTreeObj := Object{otype: TreeObject, sha1: tree.sha1}
+	badTreeObj.contents.WriteString("malformed")
+	if err := repo.Store(badTreeObj); err != nil {
+		t.Fatal(err)
+	}
+	if repo.loadTree(tree, badTreeObj.sha1, "") == nil {
+		t.Error("loaded malformed tree")
+	}
+}
