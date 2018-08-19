@@ -24,7 +24,7 @@ func main() {
 		if err := repo.CheckoutTree(flag.Args()[0]); err != nil {
 			log.Fatal(err)
 		} else {
-			fmt.Printf("Switched to branch %q\n", *branch)
+			fmt.Printf("Switched to branch %q\n", flag.Args()[0])
 		}
 
 	} else if len(flag.Args()) == 2 { // checkout a single file

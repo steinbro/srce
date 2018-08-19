@@ -99,3 +99,21 @@ func (r Repo) loadTree(root *Node, sha1 Hash, path string) error {
 	}
 	return nil
 }
+
+func (n *Node) walk() chan string {
+	ch := make(chan string)
+	go func() {
+		var _walk func(*Node, string)
+		_walk = func(n2 *Node, path string) {
+			if len(path) > 0 {
+				ch <- path
+			}
+			for _, c := range n2.children {
+				_walk(c, filepath.Join(path, c.name))
+			}
+		}
+		_walk(n, "")
+		close(ch)
+	}()
+	return ch
+}

@@ -3,6 +3,7 @@ package srce
 import (
 	"fmt"
 	"io/ioutil"
+	"os"
 	"path/filepath"
 )
 
@@ -41,7 +42,17 @@ func (r Repo) loadCommitTree(refname string) (*Node, error) {
 }
 
 func (r Repo) CheckoutTree(refname string) error {
-	//TODO
+	tree, err := r.loadCommitTree(refname)
+	if err != nil {
+		return err
+	}
+
+	for path := range tree.walk() {
+		if err := r.restoreFile(tree, path); err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 
@@ -51,6 +62,10 @@ func (r Repo) CheckoutFile(refname, filepath string) error {
 		return err
 	}
 
+	return r.restoreFile(tree, filepath)
+}
+
+func (r Repo) restoreFile(tree *Node, filepath string) error {
 	fileHash, err := tree.get(filepath)
 	if err != nil {
 		return err
@@ -59,5 +74,11 @@ func (r Repo) CheckoutFile(refname, filepath string) error {
 	if err != nil {
 		return err
 	}
-	return ioutil.WriteFile(filepath, []byte(fileObj.Contents()), 0644)
+	if fileObj.otype == TreeObject {
+		return os.MkdirAll(filepath, 0644)
+	} else if fileObj.otype == BlobObject {
+		return ioutil.WriteFile(filepath, []byte(fileObj.Contents()), 0644)
+	} else {
+		return fmt.Errorf("cannot restore object of type %q", fileObj.otype)
+	}
 }

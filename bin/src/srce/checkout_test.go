@@ -3,6 +3,8 @@ package srce
 import (
 	"bytes"
 	"io/ioutil"
+	"os"
+	"path/filepath"
 	"testing"
 )
 
@@ -65,6 +67,52 @@ func TestCheckoutFile(t *testing.T) {
 		t.Fatal("checked out nonexistent file")
 	}
 	if err := repo.CheckoutFile("master", testFile); err != nil {
+		t.Fatal(err)
+	}
+
+	if contents, err := ioutil.ReadFile(testFile); err != nil {
+		t.Fatal(err)
+	} else if bytes.Compare(contents, originalContents) != 0 {
+		t.Errorf(
+			"post-CheckoutFile %q contents = %q (expecting %q)",
+			testFile, contents, originalContents)
+	}
+}
+
+func TestCheckoutTree(t *testing.T) {
+	repo := setUp(t)
+	defer tearDown(t)
+
+	// write "hello world" to foo/bar (file within a tree)
+	originalContents := []byte("hello world")
+	testDir := "foo"
+	if err := os.Mkdir(testDir, 0755); err != nil {
+		t.Fatal(err)
+	}
+	defer os.RemoveAll(testDir)
+	testFile := filepath.Join(testDir, "bar")
+	if err := ioutil.WriteFile(testFile, originalContents, 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	// commit .srce-test/foo
+	if err := repo.Add(testFile); err != nil {
+		t.Fatal(err)
+	}
+	if err := repo.Commit("test commit"); err != nil {
+		t.Fatal(err)
+	}
+
+	// replace contents of .srce-test/foo with "goodbye world"
+	if err := ioutil.WriteFile(testFile, []byte("goodbye world"), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	// checkout committed version of .srce-test
+	if err := repo.CheckoutTree("nonexistent"); err == nil {
+		t.Fatal("checked out file from nonexistent branch")
+	}
+	if err := repo.CheckoutTree("master"); err != nil {
 		t.Fatal(err)
 	}
 

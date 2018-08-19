@@ -121,3 +121,20 @@ func TestLoadTreeBad(t *testing.T) {
 		t.Error("loaded malformed tree")
 	}
 }
+
+func TestTreeWalk(t *testing.T) {
+	tree := makeTree()
+	tree.add("foo/bar/baz", "deadbeef")
+	tree.add("foo/bar/qux", "deadbeef")
+	tree.add("bar/quux", "deadbeef")
+	expected := []string{
+		"foo", "foo/bar", "foo/bar/baz", "foo/bar/qux", "bar", "bar/quux"}
+
+	i := 0
+	for v := range tree.walk() {
+		if expected[i] != v {
+			t.Errorf("%v != %v", v, expected[i])
+		}
+		i++
+	}
+}
