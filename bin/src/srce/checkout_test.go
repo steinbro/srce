@@ -2,6 +2,7 @@ package srce
 
 import (
 	"bytes"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -112,7 +113,8 @@ func TestCheckoutTree(t *testing.T) {
 	if err := repo.CheckoutTree("nonexistent"); err == nil {
 		t.Fatal("checked out file from nonexistent branch")
 	}
-	if err := repo.CheckoutTree("master"); err != nil {
+	lastHash, _ := repo.getLastCommit(t)
+	if err := repo.CheckoutTree(lastHash.abbreviated()); err != nil {
 		t.Fatal(err)
 	}
 
@@ -120,7 +122,25 @@ func TestCheckoutTree(t *testing.T) {
 		t.Fatal(err)
 	} else if bytes.Compare(contents, originalContents) != 0 {
 		t.Errorf(
-			"post-CheckoutFile %q contents = %q (expecting %q)",
+			"post-CheckoutTree %q contents = %q (expecting %q)",
 			testFile, contents, originalContents)
+	}
+
+	// check HEAD reflog
+	headRefLog := repo.getRefLog("HEAD")
+	if entries, err := headRefLog.read(); err != nil {
+		t.Error(err)
+	} else {
+		// get last ref log entry
+		var lastEntry RefLogEntryOrError
+		for rle := range entries {
+			lastEntry = rle
+		}
+		expected := fmt.Sprintf(
+			"checkout: moving from master to %s", lastHash.abbreviated())
+		if lastEntry.message != expected {
+			t.Errorf(
+				"HEAD reflog message %q (expecting %q)", lastEntry.message, expected)
+		}
 	}
 }

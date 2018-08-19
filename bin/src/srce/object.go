@@ -7,7 +7,6 @@ import (
 	"encoding/hex"
 	"fmt"
 	"io/ioutil"
-	"os/user"
 	"strings"
 	"time"
 )
@@ -76,20 +75,12 @@ func blobOject(path string) (Object, error) {
 
 func commitObject(tree Object, parentHash Hash, message string) (Object, error) {
 	o := Object{otype: CommitObject}
-
-	// Use current OS user as committer
-	committer, err := user.Current()
-	if err != nil {
-		return o, err
-	}
-
-	authorstamp := AuthorStamp{user: committer.Username, timestamp: time.Now()}
-
 	o.contents.WriteString(fmt.Sprintf("tree %s\n", tree.sha1))
 	if parentHash != initialCommitHash {
 		o.contents.WriteString(fmt.Sprintf("parent %s\n", parentHash))
 	}
-	o.contents.WriteString(fmt.Sprintf("author %s\n", authorstamp.toString()))
+	o.contents.WriteString(fmt.Sprintf(
+		"author %s\n", currentUserAndTime().toString()))
 	o.contents.WriteString(fmt.Sprintf("\n%s\n", message))
 
 	// Compute SHA1 hash of commit contents

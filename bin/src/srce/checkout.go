@@ -7,18 +7,36 @@ import (
 	"path/filepath"
 )
 
-func (r Repo) CreateBranch(branchName string) error {
-	if _, err := r.expandRef(branchName); err != nil {
-		// point HEAD at new branch
-		// refs/head/<branchName> will be created upon commit
-		if err := r.SetSymbolicRef(
-			"HEAD", filepath.Join("refs", "heads", branchName)); err != nil {
+func (r Repo) changeHead(newName string) error {
+	oldName, err := r.GetSymbolicRef("HEAD")
+	if err != nil {
+		return err
+	}
+	// if current HEAD has commits, update reflog
+	if oldHash, err := r.Resolve(oldName); err == nil {
+		// hash sometimes doesn't change, e.g. when switching to new branch
+		newHash, _ := r.Resolve(newName)
+
+		// update reflog
+		refMessage := fmt.Sprintf(
+			"checkout: moving from %s to %s", filepath.Base(oldName), newName)
+		headRefLog := r.getRefLog("HEAD")
+		if err := headRefLog.add(oldHash, newHash, currentUserAndTime(), refMessage); err != nil {
 			return err
 		}
-		return nil
-	} else {
+	}
+
+	// point HEAD at new branch
+	return r.SetSymbolicRef("HEAD", newName)
+}
+
+func (r Repo) CreateBranch(branchName string) error {
+	if _, err := r.expandRef(branchName); err == nil {
 		return fmt.Errorf("%s: already exists", branchName)
 	}
+
+	// refs/head/<branchName> will actually be created upon commit
+	return r.changeHead(filepath.Join("refs", "heads", branchName))
 }
 
 func (r Repo) loadCommitTree(refname string) (*Node, error) {
@@ -53,7 +71,7 @@ func (r Repo) CheckoutTree(refname string) error {
 		}
 	}
 
-	return nil
+	return r.changeHead(refname)
 }
 
 func (r Repo) CheckoutFile(refname, filepath string) error {

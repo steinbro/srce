@@ -2,6 +2,7 @@ package srce
 
 import (
 	"fmt"
+	"os/user"
 	"regexp"
 	"strconv"
 	"time"
@@ -31,4 +32,9 @@ func parseAuthorStamp(input string) (a AuthorStamp, err error) {
 
 func (a AuthorStamp) toString() string {
 	return fmt.Sprintf("%s %d", a.user, a.timestamp.Unix())
+}
+
+func currentUserAndTime() AuthorStamp {
+	user, _ := user.Current()
+	return AuthorStamp{user: user.Username, timestamp: time.Now()}
 }
